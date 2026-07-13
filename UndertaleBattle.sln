@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UndertaleBattle.App", "UndertaleBattle.App\UndertaleBattle.App.csproj", "{E8916BD4-1138-4AC0-9110-8C3756F90521}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UndertaleBattle.Core", "UndertaleBattle.Core\UndertaleBattle.Core.csproj", "{4ACDC69D-D8AB-4497-8FE4-D41DE0484574}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E8916BD4-1138-4AC0-9110-8C3756F90521}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E8916BD4-1138-4AC0-9110-8C3756F90521}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E8916BD4-1138-4AC0-9110-8C3756F90521}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E8916BD4-1138-4AC0-9110-8C3756F90521}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4ACDC69D-D8AB-4497-8FE4-D41DE0484574}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4ACDC69D-D8AB-4497-8FE4-D41DE0484574}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4ACDC69D-D8AB-4497-8FE4-D41DE0484574}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4ACDC69D-D8AB-4497-8FE4-D41DE0484574}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
