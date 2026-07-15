@@ -8,7 +8,7 @@ public class BattleStateMachine : IBattleStateMachine
 {
     private readonly Dictionary<BattleStateIdentity, IBattleState> _states = new();
 
-    public IBattleState CurrentState { get; private set; } = null!;
+    public IBattleState? CurrentState { get; private set; }
 
     public void RegisterState(IBattleState state)
     {
@@ -20,7 +20,7 @@ public class BattleStateMachine : IBattleStateMachine
         if (!_states.TryGetValue(identity, out var nextState))
             throw new InvalidOperationException($"No state registered for '{identity}'. Did you forget to call RegisterState()?");
 
-        CurrentState.Exit(context);
+        CurrentState?.Exit(context);
         
         CurrentState = nextState;
         context.CurrentState = identity;

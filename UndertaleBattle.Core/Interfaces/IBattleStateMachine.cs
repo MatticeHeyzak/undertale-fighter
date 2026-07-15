@@ -5,7 +5,7 @@ namespace UndertaleBattle.Core.Interfaces;
 
 public interface IBattleStateMachine
 {
-    IBattleState CurrentState { get; }
+    IBattleState? CurrentState { get; }
     
     /// <summary>
     /// Adds a state to the registry so it can later be switched to via <see cref="ChangeState"/>.

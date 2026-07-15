@@ -1,12 +1,13 @@
 ﻿using System.Diagnostics;
 using System.Numerics;
+using UndertaleBattle.Core.Models;
 
 namespace UndertaleBattle.Core.Context;
 
 public class HeartSoul
 {
     public Vector2 Position { get; private set; }
-    public float speed { get; private set; } = 200f;
+    public float Speed { get; private set; } = 200f;
     
     public int Health { get; private set; }
     public int MaxHealth { get; private set; }
@@ -18,6 +19,8 @@ public class HeartSoul
     public float InvulnerabilityTimer { get; private set; }
     
     public bool IsDead => Health <= 0;
+    public float Radius { get; init; } = 8f;
+    
 
     public HeartSoul(int maxHealth, Vector2 startPosition)
     {
@@ -32,7 +35,7 @@ public class HeartSoul
         if (direction == Vector2.Zero)
             return;
         
-        Position += Vector2.Normalize(direction) * speed * deltaTime;
+        Position += Vector2.Normalize(direction) * Speed * deltaTime;
     }
 
     public void TakeDamage(int amount, float invulnerabilitySeconds)
@@ -57,4 +60,6 @@ public class HeartSoul
             InvulnerabilityTimer = 0f;
         }
     }
+    
+    public void ClampTo(BattleArena arena) => Position = arena.Clamp(Position);
 }

@@ -1,4 +1,5 @@
-﻿using UndertaleBattle.Core.Enums;
+﻿using System.Numerics;
+using UndertaleBattle.Core.Enums;
 using UndertaleBattle.Core.Interfaces;
 using UndertaleBattle.Core.Models;
 
@@ -16,15 +17,20 @@ public class BattleContext
 
     public string CurrentDialog { get; set; } = string.Empty;
     
+    public MenuInput PendingMenuInput { get; set; }
+    public int VisibleDialogCharCount { get; set; }
+    public Vector2 MovementInput { get; set; } 
+
     public BattleArena Arena { get; }
     public List<Bullet> Bullets { get; } = new();
     public Enemy? CurrentEnemy { get; set; }
     
     public IBattleStateMachine StateMachine { get; }
 
-    public BattleContext(IBattleStateMachine stateMachine, HeartSoul playerSoul)
+    public BattleContext(IBattleStateMachine stateMachine, HeartSoul playerSoul, BattleArena arena)
     {
         StateMachine = stateMachine;
         PlayerSoul = playerSoul;
+        Arena = arena;
     }
 }

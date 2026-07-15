@@ -2,5 +2,8 @@
 
 public enum BattleStateIdentity
 {
-    // todo
+    Menu,
+    EnemyTurn,
+    TextDialogue,
+    PlayerDodging
 }
