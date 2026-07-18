@@ -1,9 +1,10 @@
 ﻿using UndertaleBattle.Core.Context;
+using UndertaleBattle.Core.Enums;
 
 namespace UndertaleBattle.Interfaces;
 
-public interface IRaylibRenderer
+public interface IStateRenderer
 {
-    /// <summary>Called once per frame between BeginDrawing/EndDrawing.</summary>
+    BattleStateIdentity TargetState { get; }
     void Draw(BattleContext context);
 }

@@ -1,10 +1,9 @@
 ﻿using Raylib_cs;
 using UndertaleBattle.Core.Context;
-using UndertaleBattle.Core.Enums;
 using UndertaleBattle.Core.Interfaces;
-using UndertaleBattle.RaylibApp.Interfaces;
+using UndertaleBattle.Interfaces;
 
-namespace UndertaleBattle.RaylibApp;
+namespace UndertaleBattle;
 
 public sealed class GameEngine
 {

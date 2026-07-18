@@ -1,9 +1,9 @@
 ﻿using Raylib_cs;
 using System.Numerics;
 using UndertaleBattle.Core.Context;
-using UndertaleBattle.RaylibApp.Interfaces;
+using UndertaleBattle.Interfaces;
 
-namespace UndertaleBattle.RaylibApp.Renderers;
+namespace UndertaleBattle.Renderers;
 
 public sealed class ComponentRenderer : IRaylibRenderer
 {
