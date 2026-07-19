@@ -23,7 +23,7 @@ public sealed class GameEngine
 
     public void Run()
     {
-        Raylib.InitWindow(800, 600, "Undertale Battle");
+        Raylib.InitWindow(Settings.ScreenWidth, Settings.ScreenHeight, "Undertale Battle");
         Raylib.SetTargetFPS(60);
         
         _assets.LoadAll();
