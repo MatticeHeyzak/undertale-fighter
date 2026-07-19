@@ -5,6 +5,7 @@ using UndertaleBattle.Core.Patterns;
 using UndertaleBattle.Core.States;
 using UndertaleBattle.Renderers;
 using UndertaleBattle;
+using UndertaleBattle.Assets;
 using UndertaleBattle.Core.Enums;
 
 // --- Composition Root ---
@@ -22,8 +23,9 @@ machine.RegisterState(new EnemyTurnState(new BarragePattern()));
 machine.RegisterState(new PlayerDodgingState(phaseDuration: 6f));
 
 // Renderer
-var renderer = new ComponentRenderer();
+var assets = new AssetStore();
+var renderer = new ComponentRenderer(assets);
 
 // Start
 machine.ChangeState(BattleStateIdentity.Menu, context);
-new GameEngine(context, machine, renderer).Run();
+new GameEngine(context, machine, renderer, assets).Run();

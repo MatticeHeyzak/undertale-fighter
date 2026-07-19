@@ -1,4 +1,5 @@
 ﻿using Raylib_cs;
+using UndertaleBattle.Assets;
 using UndertaleBattle.Core.Context;
 using UndertaleBattle.Core.Interfaces;
 using UndertaleBattle.Interfaces;
@@ -10,25 +11,27 @@ public sealed class GameEngine
     private readonly BattleContext _context;
     private readonly IBattleStateMachine _stateMachine;
     private readonly IRaylibRenderer _renderer;
-
-    public GameEngine(BattleContext context, IBattleStateMachine stateMachine, IRaylibRenderer renderer)
+    private readonly AssetStore _assets;
+    
+    public GameEngine(BattleContext context, IBattleStateMachine stateMachine, IRaylibRenderer renderer, AssetStore assets)
     {
         _context     = context;
         _stateMachine = stateMachine;
         _renderer    = renderer;
+        _assets = assets;
     }
 
     public void Run()
     {
         Raylib.InitWindow(800, 600, "Undertale Battle");
         Raylib.SetTargetFPS(60);
+        
+        _assets.LoadAll();
 
         while (!Raylib.WindowShouldClose())
         {
-            float dt = Raylib.GetFrameTime();
-
             PollInput();
-            _stateMachine.Update(_context, dt);
+            _stateMachine.Update(_context, Raylib.GetFrameTime());
 
             Raylib.BeginDrawing();
             Raylib.ClearBackground(Color.Black);

@@ -15,5 +15,12 @@
     <ItemGroup>
       <ProjectReference Include="..\UndertaleBattle.Core\UndertaleBattle.Core.csproj" />
     </ItemGroup>
+    
+    <ItemGroup>
+        <Content Include="Assets\**\*.*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPulbishDirectory>PreserveNewest</CopyToPulbishDirectory>
+        </Content>
+    </ItemGroup>
 
 </Project>
