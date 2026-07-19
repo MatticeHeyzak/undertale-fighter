@@ -17,12 +17,19 @@ public class BattleContext
 
     public string CurrentDialog { get; set; } = string.Empty;
     
+    /// <summary>
+    /// State to transition to once the current dialogue is fully read and confirmed.
+    /// Set this right before switching to <see cref="BattleStateIdentity.TextDialogue"/>.
+    /// </summary>
+    public BattleStateIdentity DialogueNextState { get; set; }
+
     public MenuInput PendingMenuInput { get; set; }
     public int VisibleDialogCharCount { get; set; }
-    public Vector2 MovementInput { get; set; } 
+    public Vector2 MovementInput { get; set; }
 
     public BattleArena Arena { get; }
     public List<Bullet> Bullets { get; } = new();
+    public List<Item> Inventory { get; } = new();
     public Enemy? CurrentEnemy { get; set; }
     
     public IBattleStateMachine StateMachine { get; }
@@ -32,5 +39,15 @@ public class BattleContext
         StateMachine = stateMachine;
         PlayerSoul = playerSoul;
         Arena = arena;
+    }
+
+    /// <summary>
+    /// Convenience helper: shows a line of dialogue, then routes to <paramref name="nextState"/> on confirm.
+    /// </summary>
+    public void ShowDialogue(string text, BattleStateIdentity nextState)
+    {
+        CurrentDialog = text;
+        DialogueNextState = nextState;
+        StateMachine.ChangeState(BattleStateIdentity.TextDialogue, this);
     }
 }

@@ -32,5 +32,6 @@ public static class AssetManifest
     public static IReadOnlyDictionary<string, string> Fonts { get; } = new Dictionary<string, string>
     {
         [AssetKey.Fonts.Main] = $"{Root}\\Fonts\\main.ttf",
+        [AssetKey.Fonts.Dialogue] = $"{Root}\\Fonts\\main.ttf"
     };
 }

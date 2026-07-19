@@ -29,6 +29,14 @@ public class HeartSoul
         Position = startPosition;
     }
 
+    public void Heal(int amount)
+    {
+        if (amount <= 0)
+            return;
+        
+        Health = Math.Min(MaxHealth, Health + amount);
+    }
+
     /// <summary>Moves the soul by a normalized direction, scaled by speed and deltaTime.</summary>
     public void Move(Vector2 direction, float deltaTime)
     {

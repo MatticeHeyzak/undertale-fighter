@@ -1,6 +1,7 @@
 ﻿using Raylib_cs;
 using UndertaleBattle.Assets;
 using UndertaleBattle.Core.Context;
+using UndertaleBattle.Core.Input;
 using UndertaleBattle.Core.Interfaces;
 using UndertaleBattle.Interfaces;
 
@@ -12,13 +13,20 @@ public sealed class GameEngine
     private readonly IBattleStateMachine _stateMachine;
     private readonly IRaylibRenderer _renderer;
     private readonly AssetStore _assets;
+    private readonly IInputState _input;
     
-    public GameEngine(BattleContext context, IBattleStateMachine stateMachine, IRaylibRenderer renderer, AssetStore assets)
+    public GameEngine(
+        BattleContext context,
+        IBattleStateMachine stateMachine,
+        IRaylibRenderer renderer,
+        AssetStore assets,
+        IInputState input)
     {
-        _context     = context;
+        _context = context;
         _stateMachine = stateMachine;
-        _renderer    = renderer;
+        _renderer = renderer;
         _assets = assets;
+        _input = input;
     }
 
     public void Run()
@@ -30,8 +38,11 @@ public sealed class GameEngine
 
         while (!Raylib.WindowShouldClose())
         {
-            PollInput();
-            _stateMachine.Update(_context, Raylib.GetFrameTime());
+            ApplyInput();
+            
+            // Clamp to guard against spiral-of-death on frame hitches (e.g. asset load stalls)
+            float deltaTime = Math.Min(Raylib.GetFrameTime(), 1f / 30f);
+            _stateMachine.Update(_context, deltaTime);
 
             Raylib.BeginDrawing();
             Raylib.ClearBackground(Color.Black);
@@ -42,22 +53,11 @@ public sealed class GameEngine
         Raylib.CloseWindow();
     }
 
-    private void PollInput()
+    private void ApplyInput()
     {
-        // Movement
-        var dir = System.Numerics.Vector2.Zero;
-        if (Raylib.IsKeyDown(KeyboardKey.Left))  dir.X -= 1;
-        if (Raylib.IsKeyDown(KeyboardKey.Right)) dir.X += 1;
-        if (Raylib.IsKeyDown(KeyboardKey.Up))    dir.Y -= 1;
-        if (Raylib.IsKeyDown(KeyboardKey.Down))  dir.Y += 1;
-        _context.MovementInput = dir;
+        _input.Poll();
 
-        // Menu
-        if (Raylib.IsKeyPressed(KeyboardKey.Z) || Raylib.IsKeyPressed(KeyboardKey.Enter))
-            _context.PendingMenuInput = Core.Enums.MenuInput.Confirm;
-        else if (Raylib.IsKeyPressed(KeyboardKey.Left))
-            _context.PendingMenuInput = Core.Enums.MenuInput.Left;
-        else if (Raylib.IsKeyPressed(KeyboardKey.Right))
-            _context.PendingMenuInput = Core.Enums.MenuInput.Right;
+        _context.MovementInput = _input.MovementDirection;
+        _context.PendingMenuInput = _input.MenuInput;
     }
 }

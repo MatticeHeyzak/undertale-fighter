@@ -9,4 +9,10 @@ public interface IInputState
     bool IsConfirmPressed { get; }
     bool IsCancelPressed { get; }
     MenuInput MenuInput { get; }
+
+    /// <summary>
+    /// Refreshes all input properties for the current frame.
+    /// Must be called exactly once per frame, before the state machine updates.
+    /// </summary>
+    void Poll();
 }

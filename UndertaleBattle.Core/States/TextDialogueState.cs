@@ -5,9 +5,10 @@ using UndertaleBattle.Core.Interfaces;
 namespace UndertaleBattle.Core.States;
 
 /// <summary>
-/// Drives the typewriter effect and waits for player confirmation.
-/// The renderer reads <see cref="BattleContext.CurrentDialog"/> and
-/// <see cref="BattleContext.VisibleDialogCharCount"/> to draw the text.
+/// Drives the typewriter effect and waits for player confirmation, then
+/// transitions to whatever <see cref="BattleContext.DialogueNextState"/> was
+/// set by the caller (see <see cref="BattleContext.ShowDialogue"/>).
+/// Reusable across Fight/Act/Item/Mercy resolutions, boss intro text, etc.
 /// </summary>
 public sealed class TextDialogueState : IBattleState
 {
@@ -15,12 +16,6 @@ public sealed class TextDialogueState : IBattleState
 
     private const float CharsPerSecond = 30f;
     private float _elapsed;
-    private BattleStateIdentity _nextState;
-
-    public TextDialogueState(BattleStateIdentity nextState)
-    {
-        _nextState = nextState;
-    }
 
     public void Enter(BattleContext context)
     {
@@ -35,16 +30,14 @@ public sealed class TextDialogueState : IBattleState
         if (!fullyRevealed)
         {
             _elapsed += deltaTime;
-            context.VisibleDialogCharCount =
-                Math.Min((int)(_elapsed * CharsPerSecond), context.CurrentDialog.Length);
+            context.VisibleDialogCharCount = Math.Min((int)(_elapsed * CharsPerSecond), context.CurrentDialog.Length);
             return;
         }
 
-        // Fully revealed — wait for confirmation
         if (context.PendingMenuInput == MenuInput.Confirm)
         {
             context.PendingMenuInput = MenuInput.None;
-            context.StateMachine.ChangeState(_nextState, context);
+            context.StateMachine.ChangeState(context.DialogueNextState, context);
         }
     }
 

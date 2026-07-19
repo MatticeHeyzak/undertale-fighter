@@ -7,6 +7,8 @@ public class Enemy
     public int MaxHealth { get; init; }
     public bool IsDead => Health <= 0;
     
+    public string CheckDescription { get; init; } = "ATK 1 DEF 1. Not much is known about this enemy.";
+    
     public Enemy(string name, int maxHealth)
     {
         Name      = name;
