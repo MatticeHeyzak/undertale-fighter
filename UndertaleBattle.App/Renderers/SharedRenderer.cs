@@ -4,33 +4,45 @@ using UndertaleBattle.Assets;
 using UndertaleBattle.Core.Assets;
 using UndertaleBattle.Core.Context;
 using UndertaleBattle.Interfaces;
+using UndertaleBattle.Rendering;
 
 namespace UndertaleBattle.Renderers;
 
 public sealed class SharedRenderer : IRaylibRenderer
 {
-    private readonly IAssetStore _assets;
+    private readonly SpriteStore _sprites;
 
-    public SharedRenderer(IAssetStore assets)
+    public SharedRenderer(SpriteStore sprites)
     {
-        _assets = assets;
+        _sprites = sprites;
     }
 
     public void Draw(BattleContext context)
     {
         DrawArena(context);
+        DrawMenuButtons();
     }
 
     private static void DrawArena(BattleContext context)
     {
         var a = context.Arena;
-        // 1. Pack your coordinates into a Raylib Rectangle structure
-        Rectangle rect = new Rectangle(a.Left, a.Top, a.Width, a.Height);
+        var rect = new Rectangle(a.Left, a.Top, a.Width, a.Height);
+        Raylib.DrawRectangleLinesEx(rect, 4f, Color.White);
+    }
 
-        // 2. Set your desired line thickness (e.g., 4.0f)
-        float thickness = 4f; 
+    private void DrawMenuButtons()
+    {
+        for (int i = 0; i < MenuButtonLayout.ButtonCount; i++)
+        {
+            var sprite = _sprites.Get(MenuButtonLayout.Keys[i]);
+            if (sprite is null)
+                continue;
 
-        // 3. Draw using the extended function
-        Raylib.DrawRectangleLinesEx(rect, thickness, Color.White);
+            var pos = MenuButtonLayout.PositionFor(i);
+            Raylib.DrawTexturePro(
+                sprite.Texture, sprite.SourceRect,
+                sprite.DestRect(pos),
+                Vector2.Zero, 0f, Color.White);
+        }
     }
 }

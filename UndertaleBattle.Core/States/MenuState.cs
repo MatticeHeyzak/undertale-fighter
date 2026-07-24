@@ -66,15 +66,7 @@ public class MenuState : IBattleState
         if (enemy is null)
             return;
 
-        enemy.TakeDamage(FightDamage);
-
-        string dialog = enemy.IsDead
-            ? $"You attack! {enemy.Name} takes {FightDamage} damage and collapses!"
-            : $"You attack! {enemy.Name} takes {FightDamage} damage.";
-
-        // TODO: once win/lose flow exists, route defeated enemies to a Victory state
-        // instead of straight into another EnemyTurn.
-        context.ShowDialogue(dialog, BattleStateIdentity.EnemyTurn);
+        context.StateMachine.ChangeState(BattleStateIdentity.AttackQte, context);
     }
 
     private static void ResolveAct(BattleContext context)

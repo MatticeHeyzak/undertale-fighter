@@ -32,6 +32,10 @@ public class BattleContext
     public List<Item> Inventory { get; } = new();
     public Enemy? CurrentEnemy { get; set; }
     
+    public float AttackMeterPosition { get; set; }
+    
+    public float AttackFlashTimer { get; set; }
+    
     public IBattleStateMachine StateMachine { get; }
 
     public BattleContext(IBattleStateMachine stateMachine, HeartSoul playerSoul, BattleArena arena)

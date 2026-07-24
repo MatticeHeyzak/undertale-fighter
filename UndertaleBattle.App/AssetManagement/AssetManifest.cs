@@ -25,8 +25,13 @@ public static class AssetManifest
         [AssetKey.UI.ButtonMercy] = $"{Root}\\UI\\button_mercy.png",
         [AssetKey.UI.ButtonMercyActive] = $"{Root}\\UI\\button_mercy_active.png",
         
+        // Player attack
+        [AssetKey.UI.AttackBackground] = $"{Root}\\UI\\attack_background.png",
+        [AssetKey.UI.AttackBar] = $"{Root}\\UI\\attack_bar.png",
+        [AssetKey.UI.AttackBarAlt] = $"{Root}\\UI\\attack_bar_alt.png",
+        
         // Soul
-        [AssetKey.Soul.Heart] = $"{Root}\\Soul\\heart.png",
+        [AssetKey.Soul.Heart] = $"{Root}\\Soul\\heart.png"
     };
     
     public static IReadOnlyDictionary<string, string> Fonts { get; } = new Dictionary<string, string>

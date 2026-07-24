@@ -30,17 +30,19 @@ machine.RegisterState(new MenuState());
 machine.RegisterState(new TextDialogueState());
 machine.RegisterState(new EnemyTurnState(new BarragePattern()));
 machine.RegisterState(new PlayerDodgingState(phaseDuration: 6f));
+machine.RegisterState(new AttackQteState());
 
 var assets  = new AssetStore();
 var sprites = new SpriteStore(assets);
 var input   = new RaylibInputState();
 
 var renderer = new StateRendererFactory(
-    sharedRenderer: new SharedRenderer(assets),
+    sharedRenderer: new SharedRenderer(sprites),
     renderers: [
         new MenuRenderer(sprites),
         new PlayerDodgingRenderer(sprites),
-        new DialogueRenderer(assets)
+        new DialogueRenderer(assets),
+        new AttackQteRenderer(sprites)
     ]
 );
 

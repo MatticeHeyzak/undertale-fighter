@@ -5,5 +5,6 @@ public enum BattleStateIdentity
     Menu,
     EnemyTurn,
     TextDialogue,
-    PlayerDodging
+    PlayerDodging,
+    AttackQte
 }

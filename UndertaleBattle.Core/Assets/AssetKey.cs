@@ -18,6 +18,9 @@ public static class AssetKey
         public const string ButtonItemActive = "ui/button_item_active";
         public const string ButtonMercy = "ui/button_mercy";
         public const string ButtonMercyActive = "ui/button_mercy_active";
+        public const string AttackBackground = "ui/attack_background";
+        public const string AttackBar = "ui/attack_bar";
+        public const string AttackBarAlt = "ui/attack_bar_alt";
     }
 
     public static class Soul
