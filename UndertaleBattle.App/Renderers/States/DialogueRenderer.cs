@@ -4,7 +4,6 @@ using UndertaleBattle.Assets;
 using UndertaleBattle.Core.Assets;
 using UndertaleBattle.Core.Context;
 using UndertaleBattle.Core.Enums;
-using UndertaleBattle.Core.States;
 using UndertaleBattle.Interfaces;
 
 namespace UndertaleBattle.Renderers.States;
@@ -32,9 +31,9 @@ public class DialogueRenderer : IStateRenderer
         //Raylib.DrawRectangleRec(boxRect, Color.Black);
         Raylib.DrawRectangleLinesEx(boxRect, 4f, Color.White);
 
-        string visibleText = context.CurrentDialog.Length == 0
+        string visibleText = context.Dialogue.CurrentDialog.Length == 0
             ? string.Empty
-            : context.CurrentDialog[..Math.Min(context.VisibleDialogCharCount, context.CurrentDialog.Length)];
+            : context.Dialogue.CurrentDialog[..Math.Min(context.Dialogue.VisibleCharCount, context.Dialogue.CurrentDialog.Length)];
 
         var textPos = new Vector2(arena.Left + BoxPadding, arena.Top + BoxPadding);
 

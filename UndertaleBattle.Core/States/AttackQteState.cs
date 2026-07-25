@@ -31,21 +31,23 @@ public sealed class AttackQteState :  IBattleState
 
     public void Enter(BattleContext context)
     {
-        context.AttackMeterPosition = 0f;
-        context.AttackFlashTimer = 0f;
+        context.AttackQte.MeterPosition = 0f;
+        context.AttackQte.FlashTimer = 0f;
         _resolved = false;
     }
 
     public void Update(BattleContext context, float deltaTime)
     {
+        var qte = context.AttackQte;
+
         if (_resolved)
         {
-            context.AttackFlashTimer -= deltaTime;
-            if (context.AttackFlashTimer <= 0f)
+            qte.FlashTimer -= deltaTime;
+            if (qte.FlashTimer <= 0f)
                 Advance(context);
             return;
         }
-        
+
         AdvanceMeter(context, deltaTime);
 
         if (context.PendingMenuInput == MenuInput.Confirm)
@@ -53,35 +55,32 @@ public sealed class AttackQteState :  IBattleState
             context.PendingMenuInput = MenuInput.None;
             ResolveHit(context);
         }
-        else if (context.AttackMeterPosition >= 0.99f)
+        else if (qte.MeterPosition >= 0.99f)
             Advance(context);
     }
     
     public void Exit(BattleContext context) { }
     
-    private void AdvanceMeter(BattleContext context, float deltaTime)
-    {
-        context.AttackMeterPosition += _meterSpeed * deltaTime;
-    }
-    
+    private void AdvanceMeter(BattleContext context, float deltaTime) =>
+        context.AttackQte.MeterPosition += _meterSpeed * deltaTime;
+
     private void ResolveHit(BattleContext context)
     {
-        float distanceFromCenter = Math.Abs(context.AttackMeterPosition - 0.5f);
-        float accuracy = Math.Clamp(1f - distanceFromCenter / 0.5f, 0f, 1f); // 1 = dead center, 0 = edges
+        float distanceFromCenter = Math.Abs(context.AttackQte.MeterPosition - 0.5f);
+        float accuracy = Math.Clamp(1f - distanceFromCenter / 0.5f, 0f, 1f);
 
         int damage = distanceFromCenter <= _perfectZoneHalfWidth
             ? _maxDamage
             : _minDamage + (int)((_maxDamage - _minDamage) * accuracy);
 
         context.CurrentEnemy?.TakeDamage(damage);
-        context.AttackFlashTimer = FlashDuration;
-
+        context.AttackQte.FlashTimer = FlashDuration;
         _resolved = true;
     }
 
     private static void Advance(BattleContext context)
     {
-        context.AttackFlashTimer = 0;
+        context.AttackQte.FlashTimer = 0;
         context.StateMachine.ChangeState(BattleStateIdentity.EnemyTurn, context);
     }
 }

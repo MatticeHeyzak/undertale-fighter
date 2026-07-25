@@ -16,20 +16,17 @@ public class MenuState : IBattleState
 
     private const int FightDamage = 10;
 
-    public void Enter(BattleContext context)
-    {
-        context.SelectedMenuIndex = 0;
-    }
+    public void Enter(BattleContext context) => context.Menu.SelectedIndex = 0;
 
     public void Update(BattleContext context, float deltaTime)
     {
         switch (context.PendingMenuInput)
         {
             case MenuInput.Left:
-                context.SelectedMenuIndex = Math.Max(0, context.SelectedMenuIndex - 1);
+                context.Menu.SelectedIndex = (context.Menu.SelectedIndex - 1 + OptionCount) % OptionCount;
                 break;
             case MenuInput.Right:
-                context.SelectedMenuIndex = Math.Min(OptionCount - 1, context.SelectedMenuIndex + 1);
+                context.Menu.SelectedIndex = (context.Menu.SelectedIndex + 1) % OptionCount;
                 break;
             case MenuInput.Confirm:
                 HandleConfirm(context);
@@ -43,16 +40,16 @@ public class MenuState : IBattleState
     
     private static void HandleConfirm(BattleContext context)
     {
-        switch (context.SelectedMenuIndex)
+        switch (context.Menu.SelectedIndex)
         {
             case FightIndex:
                 ResolveFight(context);
                 break;
-            case ActIndex:
-                ResolveAct(context);
+            case ActIndex:  
+                ResolveAct(context);  
                 break;
             case ItemIndex:
-                ResolveItem(context);
+                ResolveItem(context); 
                 break;
             case MercyIndex:
                 ResolveMercy(context);

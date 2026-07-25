@@ -20,24 +20,25 @@ public sealed class TextDialogueState : IBattleState
     public void Enter(BattleContext context)
     {
         _elapsed = 0f;
-        context.VisibleDialogCharCount = 0;
+        context.Dialogue.VisibleCharCount = 0;
     }
 
     public void Update(BattleContext context, float deltaTime)
     {
-        bool fullyRevealed = context.VisibleDialogCharCount >= context.CurrentDialog.Length;
+        var dialogue = context.Dialogue;
+        bool fullyRevealed = dialogue.VisibleCharCount >= dialogue.CurrentDialog.Length;
 
         if (!fullyRevealed)
         {
             _elapsed += deltaTime;
-            context.VisibleDialogCharCount = Math.Min((int)(_elapsed * CharsPerSecond), context.CurrentDialog.Length);
+            dialogue.VisibleCharCount = Math.Min((int)(_elapsed * CharsPerSecond), dialogue.CurrentDialog.Length);
             return;
         }
 
         if (context.PendingMenuInput == MenuInput.Confirm)
         {
             context.PendingMenuInput = MenuInput.None;
-            context.StateMachine.ChangeState(context.DialogueNextState, context);
+            context.StateMachine.ChangeState(dialogue.NextState, context);
         }
     }
 

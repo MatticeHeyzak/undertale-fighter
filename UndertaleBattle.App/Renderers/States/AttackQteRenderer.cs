@@ -33,14 +33,14 @@ public sealed class AttackQteRenderer : IStateRenderer
 
     private void DrawMarker(BattleContext context, Rectangle arenaRect)
     {
-        Console.WriteLine("attack flash timer is: " + context.AttackFlashTimer);
-        string key = ShouldShowAlt(context.AttackFlashTimer)
+        Console.WriteLine("attack flash timer is: " + context.AttackQte.FlashTimer);
+        string key = ShouldShowAlt(context.AttackQte.FlashTimer)
             ? AssetKey.UI.AttackBarAlt
             : AssetKey.UI.AttackBar;
 
         // Travels the full arena width while staying fully inside its bounds.
         float travel = arenaRect.Width - MarkerWidth;
-        float x = arenaRect.X + travel * context.AttackMeterPosition;
+        float x = arenaRect.X + travel * context.AttackQte.MeterPosition;
 
         var markerRect = new Rectangle(x, arenaRect.Y, MarkerWidth, arenaRect.Height);
         DrawStretched(key, markerRect);
