@@ -4,40 +4,50 @@ using UndertaleBattle.Core.Interfaces;
 
 namespace UndertaleBattle.Core.States;
 
-public class MenuState : IBattleState
+/// <summary>
+/// Handles the FIGHT, ACT, ITEM, and MERCY command row.
+/// </summary>
+public sealed class MenuState : IBattleState
 {
     public BattleStateIdentity Identity => BattleStateIdentity.Menu;
+
     public const int OptionCount = 4;
 
     private const int FightIndex = 0;
-    private const int ActIndex   = 1;
-    private const int ItemIndex  = 2;
+    private const int ActIndex = 1;
+    private const int ItemIndex = 2;
     private const int MercyIndex = 3;
 
-    private const int FightDamage = 10;
-
-    public void Enter(BattleContext context) => context.Menu.SelectedIndex = 0;
+    public void Enter(BattleContext context)
+    {
+        context.Menu.Reset();
+        context.ClearTransientInput();
+    }
 
     public void Update(BattleContext context, float deltaTime)
     {
         switch (context.PendingMenuInput)
         {
             case MenuInput.Left:
-                context.Menu.SelectedIndex = (context.Menu.SelectedIndex - 1 + OptionCount) % OptionCount;
+                context.Menu.MoveLeft(OptionCount);
                 break;
+
             case MenuInput.Right:
-                context.Menu.SelectedIndex = (context.Menu.SelectedIndex + 1) % OptionCount;
+                context.Menu.MoveRight(OptionCount);
                 break;
+
             case MenuInput.Confirm:
                 HandleConfirm(context);
                 break;
         }
 
-        context.PendingMenuInput = MenuInput.None;
+        context.ClearTransientInput();
     }
-    
-    public void Exit(BattleContext context) { }
-    
+
+    public void Exit(BattleContext context)
+    {
+    }
+
     private static void HandleConfirm(BattleContext context)
     {
         switch (context.Menu.SelectedIndex)
@@ -45,23 +55,34 @@ public class MenuState : IBattleState
             case FightIndex:
                 ResolveFight(context);
                 break;
-            case ActIndex:  
-                ResolveAct(context);  
+
+            case ActIndex:
+                ResolveAct(context);
                 break;
+
             case ItemIndex:
-                ResolveItem(context); 
+                ResolveItem(context);
                 break;
+
             case MercyIndex:
                 ResolveMercy(context);
                 break;
+
+            default:
+                throw new InvalidOperationException(
+                    $"Unknown menu index '{context.Menu.SelectedIndex}'.");
         }
     }
 
     private static void ResolveFight(BattleContext context)
     {
-        var enemy = context.CurrentEnemy;
-        if (enemy is null)
+        if (context.CurrentEnemy is null)
+        {
+            context.ShowDialogue(
+                "There is nothing to fight.",
+                BattleStateIdentity.Menu);
             return;
+        }
 
         context.StateMachine.ChangeState(BattleStateIdentity.AttackQte, context);
     }
@@ -70,35 +91,41 @@ public class MenuState : IBattleState
     {
         var enemy = context.CurrentEnemy;
 
-        // TODO: replace with a sub-menu of named acts once more than "Check" exists.
-        string dialog = enemy is null
-            ? "There's nothing here to act on."
+        string dialogue = enemy is null
+            ? "There is nothing here to act on."
             : $"* Check\n{enemy.Name} - {enemy.CheckDescription}";
 
-        context.ShowDialogue(dialog, BattleStateIdentity.EnemyTurn);
+        context.ShowDialogue(dialogue, BattleStateIdentity.EnemyTurn);
     }
 
     private static void ResolveItem(BattleContext context)
     {
-        // TODO: replace with a sub-menu once the inventory has more than one slot.
         if (context.Inventory.Count == 0)
         {
-            context.ShowDialogue("You have no items!", BattleStateIdentity.Menu);
+            context.ShowDialogue(
+                "You have no items!",
+                BattleStateIdentity.Menu);
             return;
         }
 
+        // Phase 1 retains the existing first-item behavior.
+        // A proper inventory-selection state belongs in a later phase.
         var item = context.Inventory[0];
         context.Inventory.RemoveAt(0);
 
         context.PlayerSoul.Heal(item.HealAmount);
 
-        context.ShowDialogue(item.BuildUseDialogue(), BattleStateIdentity.EnemyTurn);
+        context.ShowDialogue(
+            item.BuildUseDialogue(),
+            BattleStateIdentity.EnemyTurn);
     }
 
     private static void ResolveMercy(BattleContext context)
     {
+        string enemyName = context.CurrentEnemy?.Name ?? "the enemy";
+
         context.ShowDialogue(
-            $"You spare {context.CurrentEnemy?.Name ?? "the enemy"}... but it doesn't work yet.",
+            $"You spare {enemyName}... but it does not work yet.",
             BattleStateIdentity.EnemyTurn);
     }
 }

@@ -28,18 +28,38 @@ public class DialogueRenderer : IStateRenderer
         var arena = context.Arena;
         var boxRect = new Rectangle(arena.Left, arena.Top, arena.Width, arena.Height);
 
-        //Raylib.DrawRectangleRec(boxRect, Color.Black);
         Raylib.DrawRectangleLinesEx(boxRect, 4f, Color.White);
 
-        string visibleText = context.Dialogue.CurrentDialog.Length == 0
-            ? string.Empty
-            : context.Dialogue.CurrentDialog[..Math.Min(context.Dialogue.VisibleCharCount, context.Dialogue.CurrentDialog.Length)];
+        var dialogue = context.Dialogue;
 
-        var textPos = new Vector2(arena.Left + BoxPadding, arena.Top + BoxPadding);
+        string visibleText = dialogue.Text.Length == 0
+            ? string.Empty
+            : dialogue.Text[..Math.Min(
+                dialogue.VisibleCharacterCount,
+                dialogue.Text.Length)];
+
+        var textPosition = new Vector2(
+            arena.Left + BoxPadding,
+            arena.Top + BoxPadding);
 
         if (_assets.TryGetFont(AssetKey.Fonts.Dialogue, out var font))
-            Raylib.DrawTextEx(font, visibleText, textPos, FontSize, LineSpacing, Color.White);
+        {
+            Raylib.DrawTextEx(
+                font,
+                visibleText,
+                textPosition,
+                FontSize,
+                LineSpacing,
+                Color.White);
+        }
         else
-            Raylib.DrawText(visibleText, (int)textPos.X, (int)textPos.Y, FontSize, Color.White);
+        {
+            Raylib.DrawText(
+                visibleText,
+                (int)textPosition.X,
+                (int)textPosition.Y,
+                FontSize,
+                Color.White);
+        }
     }
 }

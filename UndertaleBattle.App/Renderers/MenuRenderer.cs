@@ -21,12 +21,25 @@ public sealed class MenuRenderer : IStateRenderer
 
     public void Draw(BattleContext context)
     {
-        string key = MenuButtonLayout.ActiveKeys[context.Menu.SelectedIndex];
+        int selectedIndex = context.Menu.SelectedIndex;
+
+        if (selectedIndex < 0 || selectedIndex >= MenuButtonLayout.ButtonCount)
+            return;
+
+        string key = MenuButtonLayout.ActiveKeys[selectedIndex];
+
         var sprite = _sprites.Get(key);
         if (sprite is null)
             return;
 
-        var pos = MenuButtonLayout.PositionFor(context.Menu.SelectedIndex);
-        Raylib.DrawTexturePro(sprite.Texture, sprite.SourceRect, sprite.DestRect(pos), Vector2.Zero, 0f, Color.White);
+        var position = MenuButtonLayout.PositionFor(selectedIndex);
+
+        Raylib.DrawTexturePro(
+            sprite.Texture,
+            sprite.SourceRect,
+            sprite.DestRect(position),
+            Vector2.Zero,
+            0f,
+            Color.White);
     }
 }

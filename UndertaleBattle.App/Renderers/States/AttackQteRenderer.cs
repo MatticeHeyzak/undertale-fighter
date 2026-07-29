@@ -27,23 +27,30 @@ public sealed class AttackQteRenderer : IStateRenderer
 
     public void Draw(BattleContext context)
     {
-        var arenaRect = ToRectangle(context.Arena);
+        Rectangle arenaRect = ToRectangle(context.Arena);
+
+        string barKey = ShouldShowAlt(context.AttackQte.FlashTimer)
+            ? AssetKey.UI.AttackBarAlt
+            : AssetKey.UI.AttackBar;
+
         DrawStretched(AssetKey.UI.AttackBackground, arenaRect);
+        DrawStretched(barKey, arenaRect);
         DrawMarker(context, arenaRect);
     }
 
     private void DrawMarker(BattleContext context, Rectangle arenaRect)
     {
-        string key = ShouldShowAlt(context.AttackQte.FlashTimer)
-            ? AssetKey.UI.AttackBarAlt
-            : AssetKey.UI.AttackBar;
+        float markerX =
+            arenaRect.X +
+            context.AttackQte.MeterPosition * arenaRect.Width;
 
-        // Travels the full arena width while staying fully inside its bounds.
-        float travel = arenaRect.Width - MarkerWidth;
-        float x = arenaRect.X + travel * context.AttackQte.MeterPosition;
+        var markerRect = new Rectangle(
+            markerX - MarkerWidth / 2f,
+            arenaRect.Y,
+            MarkerWidth,
+            arenaRect.Height);
 
-        var markerRect = new Rectangle(x, arenaRect.Y, MarkerWidth, arenaRect.Height);
-        DrawStretched(key, markerRect);
+        Raylib.DrawRectangleRec(markerRect, Color.White);
     }
 
     private static bool ShouldShowAlt(float attackFlashTimer)

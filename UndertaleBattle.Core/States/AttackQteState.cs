@@ -4,83 +4,124 @@ using UndertaleBattle.Core.Interfaces;
 
 namespace UndertaleBattle.Core.States;
 
-public sealed class AttackQteState :  IBattleState
+/// <summary>
+/// Runs the player's attack timing minigame and applies damage to the active enemy.
+/// </summary>
+public sealed class AttackQteState : IBattleState
 {
     public BattleStateIdentity Identity => BattleStateIdentity.AttackQte;
 
     private const float FlashDuration = 2f;
 
     private readonly float _meterSpeed;
-    private readonly int _minDamage;
-    private readonly int _maxDamage;
+    private readonly int _minimumDamage;
+    private readonly int _maximumDamage;
     private readonly float _perfectZoneHalfWidth;
 
     private bool _resolved;
 
     public AttackQteState(
         float meterSpeed = 1f,
-        int minDamage = 2,
-        int maxDamage = 15,
+        int minimumDamage = 2,
+        int maximumDamage = 15,
         float perfectZoneHalfWidth = 0.06f)
     {
+        if (meterSpeed <= 0f)
+            throw new ArgumentOutOfRangeException(nameof(meterSpeed));
+
+        if (minimumDamage < 0)
+            throw new ArgumentOutOfRangeException(nameof(minimumDamage));
+
+        if (maximumDamage < minimumDamage)
+            throw new ArgumentOutOfRangeException(nameof(maximumDamage));
+
+        if (perfectZoneHalfWidth is <= 0f or > 0.5f)
+            throw new ArgumentOutOfRangeException(nameof(perfectZoneHalfWidth));
+
         _meterSpeed = meterSpeed;
-        _minDamage = minDamage;
-        _maxDamage = maxDamage;
+        _minimumDamage = minimumDamage;
+        _maximumDamage = maximumDamage;
         _perfectZoneHalfWidth = perfectZoneHalfWidth;
     }
 
     public void Enter(BattleContext context)
     {
-        context.AttackQte.MeterPosition = 0f;
-        context.AttackQte.FlashTimer = 0f;
+        context.AttackQte.Reset();
+        context.ClearTransientInput();
         _resolved = false;
     }
 
     public void Update(BattleContext context, float deltaTime)
     {
-        var qte = context.AttackQte;
-
         if (_resolved)
         {
-            qte.FlashTimer -= deltaTime;
-            if (qte.FlashTimer <= 0f)
-                Advance(context);
+            context.AttackQte.TickFlash(deltaTime);
+
+            if (!context.AttackQte.IsResolving)
+                AdvanceToEnemyTurn(context);
+
             return;
         }
 
-        AdvanceMeter(context, deltaTime);
+        context.AttackQte.AdvanceMeter(_meterSpeed * deltaTime);
 
         if (context.PendingMenuInput == MenuInput.Confirm)
         {
-            context.PendingMenuInput = MenuInput.None;
+            context.ClearTransientInput();
             ResolveHit(context);
+            return;
         }
-        else if (qte.MeterPosition >= 0.99f)
-            Advance(context);
+
+        if (context.AttackQte.MeterPosition >= 1f)
+            AdvanceToEnemyTurn(context);
     }
-    
-    public void Exit(BattleContext context) { }
-    
-    private void AdvanceMeter(BattleContext context, float deltaTime) =>
-        context.AttackQte.MeterPosition += _meterSpeed * deltaTime;
+
+    public void Exit(BattleContext context)
+    {
+    }
 
     private void ResolveHit(BattleContext context)
     {
-        float distanceFromCenter = Math.Abs(context.AttackQte.MeterPosition - 0.5f);
-        float accuracy = Math.Clamp(1f - distanceFromCenter / 0.5f, 0f, 1f);
+        var enemy = context.CurrentEnemy;
+
+        // An enemy could have been removed by another battle effect while
+        // this state was active. Do not attempt to damage a null/dead target.
+        if (enemy is null || enemy.IsDead)
+        {
+            AdvanceToEnemyTurn(context);
+            return;
+        }
+
+        float distanceFromCenter =
+            MathF.Abs(context.AttackQte.MeterPosition - 0.5f);
+
+        float accuracy = Math.Clamp(
+            1f - distanceFromCenter / 0.5f,
+            0f,
+            1f);
 
         int damage = distanceFromCenter <= _perfectZoneHalfWidth
-            ? _maxDamage
-            : _minDamage + (int)((_maxDamage - _minDamage) * accuracy);
+            ? _maximumDamage
+            : _minimumDamage +
+              (int)((_maximumDamage - _minimumDamage) * accuracy);
 
-        context.CurrentEnemy?.TakeDamage(damage);
-        context.AttackQte.FlashTimer = FlashDuration;
+        enemy.TakeDamage(damage);
+        
+        if (enemy.IsDead)
+            context.BattleOver = true;
+
+        context.AttackQte.StartFlash(FlashDuration);
         _resolved = true;
     }
 
-    private static void Advance(BattleContext context)
+    private static void AdvanceToEnemyTurn(BattleContext context)
     {
-        context.AttackQte.FlashTimer = 0;
-        context.StateMachine.ChangeState(BattleStateIdentity.EnemyTurn, context);
+        context.AttackQte.Reset();
+
+        BattleStateIdentity nextState = context.BattleOver
+            ? BattleStateIdentity.Menu
+            : BattleStateIdentity.EnemyTurn;
+
+        context.StateMachine.ChangeState(nextState, context);
     }
 }
