@@ -31,11 +31,13 @@ public sealed class PlayerDodgingState : IBattleState
     {
         _elapsed += deltaTime;
 
+        context.CurrentAttackPattern?.Update(context, deltaTime);
         MovePlayer(context, deltaTime);
         TickBullets(context, deltaTime);
         CheckCollisions(context);
 
-        if (_elapsed >= _phaseDuration || context.PlayerSoul.IsDead)
+        bool patternDone = context.CurrentAttackPattern?.IsFinished ?? true;
+        if ((_elapsed >= _phaseDuration && patternDone) || context.PlayerSoul.IsDead)
             context.StateMachine.ChangeState(BattleStateIdentity.Menu, context);
     }
 

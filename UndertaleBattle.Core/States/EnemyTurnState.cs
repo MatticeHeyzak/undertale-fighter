@@ -14,14 +14,12 @@ public sealed class EnemyTurnState : IBattleState
 
     private readonly IAttackPattern _pattern;
 
-    public EnemyTurnState(IAttackPattern pattern)
-    {
-        _pattern = pattern;
-    }
+    public EnemyTurnState(IAttackPattern pattern) => _pattern = pattern;
 
     public void Enter(BattleContext context)
     {
-        _pattern.Spawn(context);
+        _pattern.Enter(context);
+        context.CurrentAttackPattern = _pattern;
         context.StateMachine.ChangeState(BattleStateIdentity.PlayerDodging, context);
     }
 

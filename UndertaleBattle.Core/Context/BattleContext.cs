@@ -15,10 +15,11 @@ public class BattleContext
     public MenuInput PendingMenuInput { get; set; }
     public Vector2 MovementInput { get; set; }
     
-    public BattleArena Arena { get; }
+    public IArenaShape Arena { get; }
     public List<Bullet> Bullets { get; } = new();
     public List<Item> Inventory { get; } = new();
     public Enemy? CurrentEnemy { get; set; }
+    public IAttackPattern? CurrentAttackPattern { get; set; }
     
     // Per-state scratch data.
     public MenuStateData Menu { get; } = new();

@@ -3,6 +3,7 @@ using Raylib_cs;
 using UndertaleBattle.Core.Assets;
 using UndertaleBattle.Core.Context;
 using UndertaleBattle.Core.Enums;
+using UndertaleBattle.Core.Interfaces;
 using UndertaleBattle.Core.Models;
 using UndertaleBattle.Interfaces;
 using UndertaleBattle.Rendering;
@@ -33,7 +34,6 @@ public sealed class AttackQteRenderer : IStateRenderer
 
     private void DrawMarker(BattleContext context, Rectangle arenaRect)
     {
-        Console.WriteLine("attack flash timer is: " + context.AttackQte.FlashTimer);
         string key = ShouldShowAlt(context.AttackQte.FlashTimer)
             ? AssetKey.UI.AttackBarAlt
             : AssetKey.UI.AttackBar;
@@ -65,6 +65,6 @@ public sealed class AttackQteRenderer : IStateRenderer
         Raylib.DrawTexturePro(sprite.Texture, sprite.SourceRect, destRect, Vector2.Zero, 0f, Color.White);
     }
 
-    private static Rectangle ToRectangle(BattleArena arena) =>
+    private static Rectangle ToRectangle(IArenaShape arena) =>
         new(arena.Left, arena.Top, arena.Width, arena.Height);
 }

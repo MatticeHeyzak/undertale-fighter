@@ -32,7 +32,8 @@ public class BattleStateMachine : IBattleStateMachine
     {
         if (CurrentState is null)
             throw new InvalidOperationException("Update() called before any state was activated. Call ChangeState() first.");
-        
+
+        context.Arena.Update(deltaTime);
         CurrentState.Update(context, deltaTime);
     }
 }

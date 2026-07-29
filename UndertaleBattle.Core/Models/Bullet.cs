@@ -1,4 +1,6 @@
 ﻿using System.Numerics;
+using UndertaleBattle.Core.Interfaces;
+using UndertaleBattle.Core.Patterns.Motion;
 
 namespace UndertaleBattle.Core.Models;
 
@@ -10,8 +12,7 @@ public sealed class Bullet
     public int Damage { get; init; }
     public bool IsAlive { get; set; } = true;
 
-    public void Update(float deltaTime)
-    {
-        Position += Velocity * deltaTime;
-    }
+    private IBulletMotion Motion { get; init; } = new LinearMotion();
+
+    public void Update(float deltaTime) => Motion.Update(this, deltaTime);
 }

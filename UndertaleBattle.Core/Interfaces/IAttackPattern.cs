@@ -8,5 +8,7 @@ namespace UndertaleBattle.Core.Interfaces;
 /// </summary>
 public interface IAttackPattern
 {
-    void Spawn(BattleContext context);
+    void Enter(BattleContext context);
+    void Update(BattleContext context, float deltaTime);
+    bool IsFinished { get; }
 }

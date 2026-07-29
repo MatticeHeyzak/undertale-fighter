@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Numerics;
+using UndertaleBattle.Core.Interfaces;
 using UndertaleBattle.Core.Models;
 
 namespace UndertaleBattle.Core.Context;
@@ -69,5 +70,5 @@ public class HeartSoul
         }
     }
     
-    public void ClampTo(BattleArena arena) => Position = arena.Clamp(Position);
+    public void ClampTo(IArenaShape arena) => Position = arena.Clamp(Position);
 }
