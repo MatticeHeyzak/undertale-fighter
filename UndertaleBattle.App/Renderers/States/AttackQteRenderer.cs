@@ -1,10 +1,9 @@
 ﻿using System.Numerics;
 using Raylib_cs;
 using UndertaleBattle.Core.Assets;
-using UndertaleBattle.Core.Context;
 using UndertaleBattle.Core.Enums;
 using UndertaleBattle.Core.Interfaces;
-using UndertaleBattle.Core.Models;
+using UndertaleBattle.Core.Runtime;
 using UndertaleBattle.Interfaces;
 using UndertaleBattle.Rendering;
 
@@ -12,66 +11,77 @@ namespace UndertaleBattle.Renderers.States;
 
 public sealed class AttackQteRenderer : IStateRenderer
 {
-    public BattleStateIdentity TargetState => BattleStateIdentity.AttackQte;
-
-    /// <summary>Marker width in pixels - independent of arena size so it stays a readable thin bar.</summary>
     private const float MarkerWidth = 15f;
+    private const float FlashesPerSecond = 5f;
 
     private readonly SpriteStore _sprites;
-    private const float FlashesPerSecond = 5f;
+
+    public BattleStateIdentity TargetState => BattleStateIdentity.AttackQte;
 
     public AttackQteRenderer(SpriteStore sprites)
     {
         _sprites = sprites;
     }
 
-    public void Draw(BattleContext context)
+    public void Draw(BattleSession session)
     {
-        Rectangle arenaRect = ToRectangle(context.Arena);
+        Rectangle arenaRect = ToRectangle(session.Arena.Shape);
+        DrawStretched(AssetKey.UI.AttackBackground, arenaRect);
+        DrawMarker(session, arenaRect);
+    }
 
-        string barKey = ShouldShowAlt(context.AttackQte.FlashTimer)
+    private void DrawMarker(
+        BattleSession session,
+        Rectangle arenaRect)
+    {
+        string key = ShouldShowAlt(session.Ui.AttackQte.FlashTimer)
             ? AssetKey.UI.AttackBarAlt
             : AssetKey.UI.AttackBar;
-
-        DrawStretched(AssetKey.UI.AttackBackground, arenaRect);
-        DrawStretched(barKey, arenaRect);
-        DrawMarker(context, arenaRect);
-    }
-
-    private void DrawMarker(BattleContext context, Rectangle arenaRect)
-    {
-        float markerX =
-            arenaRect.X +
-            context.AttackQte.MeterPosition * arenaRect.Width;
-
-        var markerRect = new Rectangle(
-            markerX - MarkerWidth / 2f,
-            arenaRect.Y,
-            MarkerWidth,
-            arenaRect.Height);
-
-        Raylib.DrawRectangleRec(markerRect, Color.White);
-    }
-
-    private static bool ShouldShowAlt(float attackFlashTimer)
-    {
-        if (attackFlashTimer <= 0)
-            return false;
         
-        float period = 1f / FlashesPerSecond;
-        float phase = attackFlashTimer % period;
-        return phase < period / 2f;
-    }
+        float travel = arenaRect.Width - MarkerWidth;
+        float x = arenaRect.X + travel * session.Ui.AttackQte.MeterPosition;
 
-    private void DrawStretched(string key, Rectangle destRect)
-    {
+        var markerRect = new Rectangle(x, arenaRect.Y, MarkerWidth, arenaRect.Height);
         var sprite = _sprites.Get(key);
         if (sprite is null)
             return;
-
-        Raylib.DrawTexturePro(sprite.Texture, sprite.SourceRect, destRect, Vector2.Zero, 0f, Color.White);
+        
+        Raylib.DrawTexturePro(sprite.Texture, sprite.SourceRect, markerRect, Vector2.Zero, 0f, Color.White);
     }
 
-    private static Rectangle ToRectangle(IArenaShape arena) =>
-        new(arena.Left, arena.Top, arena.Width, arena.Height);
+    private static bool ShouldShowAlt(float flashTimer)
+    {
+        if (flashTimer <= 0f)
+            return false;
+
+        float period = 1f / FlashesPerSecond;
+        return flashTimer % period < period / 2f;
+    }
+
+    private void DrawStretched(
+        string key,
+        Rectangle destinationRect)
+    {
+        var sprite = _sprites.Get(key);
+
+        if (sprite is null)
+            return;
+
+        Raylib.DrawTexturePro(
+            sprite.Texture,
+            sprite.SourceRect,
+            destinationRect,
+            Vector2.Zero,
+            0f,
+            Color.White);
+    }
+
+    private static Rectangle ToRectangle(IArenaShape arena)
+    {
+        return new Rectangle(
+            arena.Left,
+            arena.Top,
+            arena.Width,
+            arena.Height);
+    }
 }

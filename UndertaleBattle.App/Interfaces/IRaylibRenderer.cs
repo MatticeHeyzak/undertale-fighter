@@ -1,9 +1,9 @@
-﻿using UndertaleBattle.Core.Context;
+﻿using UndertaleBattle.Core.Enums;
+using UndertaleBattle.Core.Runtime;
 
 namespace UndertaleBattle.Interfaces;
 
 public interface IRaylibRenderer
 {
-    /// <summary>Called once per frame between BeginDrawing/EndDrawing.</summary>
-    void Draw(BattleContext context);
+    void Draw(BattleSession context, BattleStateIdentity currentState);
 }

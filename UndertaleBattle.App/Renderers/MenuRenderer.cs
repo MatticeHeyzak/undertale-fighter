@@ -1,8 +1,7 @@
 ﻿using System.Numerics;
 using Raylib_cs;
-using UndertaleBattle.Core.Assets;
-using UndertaleBattle.Core.Context;
 using UndertaleBattle.Core.Enums;
+using UndertaleBattle.Core.Runtime;
 using UndertaleBattle.Interfaces;
 using UndertaleBattle.Rendering;
 
@@ -10,21 +9,24 @@ namespace UndertaleBattle.Renderers;
 
 public sealed class MenuRenderer : IStateRenderer
 {
-    public BattleStateIdentity TargetState => BattleStateIdentity.Menu;
-
     private readonly SpriteStore _sprites;
+
+    public BattleStateIdentity TargetState => BattleStateIdentity.Menu;
 
     public MenuRenderer(SpriteStore sprites)
     {
         _sprites = sprites;
     }
 
-    public void Draw(BattleContext context)
+    public void Draw(BattleSession session)
     {
-        int selectedIndex = context.Menu.SelectedIndex;
+        int selectedIndex = session.Ui.CommandMenu.SelectedIndex;
 
-        if (selectedIndex < 0 || selectedIndex >= MenuButtonLayout.ButtonCount)
+        if (selectedIndex < 0 ||
+            selectedIndex >= MenuButtonLayout.ButtonCount)
+        {
             return;
+        }
 
         string key = MenuButtonLayout.ActiveKeys[selectedIndex];
 

@@ -1,5 +1,5 @@
-﻿using UndertaleBattle.Core.Context;
-using UndertaleBattle.Core.Enums;
+﻿using UndertaleBattle.Core.Enums;
+using UndertaleBattle.Core.Runtime;
 using UndertaleBattle.Interfaces;
 
 namespace UndertaleBattle.Renderers;
@@ -11,20 +11,32 @@ namespace UndertaleBattle.Renderers;
 public sealed class StateRendererFactory : IRaylibRenderer
 {
     private readonly Dictionary<BattleStateIdentity, IStateRenderer> _renderers = new();
-    private readonly IRaylibRenderer _sharedRenderer; // HUD, arena etc.
+    private readonly IRaylibRenderer _sharedRenderer;
 
-    public StateRendererFactory(IRaylibRenderer sharedRenderer, IEnumerable<IStateRenderer> renderers)
+    public StateRendererFactory(
+        IRaylibRenderer sharedRenderer,
+        IEnumerable<IStateRenderer> renderers)
     {
-        _sharedRenderer = sharedRenderer;
-        foreach (var r in renderers)
-            _renderers[r.TargetState] = r;
+        _sharedRenderer =
+            sharedRenderer ?? throw new ArgumentNullException(nameof(sharedRenderer));
+
+        foreach (var renderer in renderers)
+        {
+            if (!_renderers.TryAdd(renderer.TargetState, renderer))
+            {
+                throw new InvalidOperationException(
+                    $"A renderer is already registered for '{renderer.TargetState}'.");
+            }
+        }
     }
 
-    public void Draw(BattleContext context)
+    public void Draw(
+        BattleSession session,
+        BattleStateIdentity currentState)
     {
-        _sharedRenderer.Draw(context);
+        _sharedRenderer.Draw(session, currentState);
 
-        if (_renderers.TryGetValue(context.CurrentState, out var stateRenderer))
-            stateRenderer.Draw(context);
+        if (_renderers.TryGetValue(currentState, out var renderer))
+            renderer.Draw(session);
     }
 }

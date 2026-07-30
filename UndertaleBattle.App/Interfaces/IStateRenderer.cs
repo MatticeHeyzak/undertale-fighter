@@ -1,10 +1,10 @@
-﻿using UndertaleBattle.Core.Context;
-using UndertaleBattle.Core.Enums;
+﻿using UndertaleBattle.Core.Enums;
+using UndertaleBattle.Core.Runtime;
 
 namespace UndertaleBattle.Interfaces;
 
 public interface IStateRenderer
 {
     BattleStateIdentity TargetState { get; }
-    void Draw(BattleContext context);
+    void Draw(BattleSession context);
 }

@@ -5,30 +5,54 @@ using UndertaleBattle.Core.Input;
 
 namespace UndertaleBattle.Input;
 
-public sealed class RaylibInputState : IInputState
+public sealed class RaylibInputState : IBattleInputSource
 {
-    public Vector2 MovementDirection { get; private set; }
-    public bool IsConfirmPressed { get; private set; }
-    public bool IsCancelPressed { get; private set; }
-    public MenuInput MenuInput { get; private set; }
-
-    public void Poll()
+    public BattleInput Poll()
     {
-        var dir = Vector2.Zero;
-        if (Raylib.IsKeyDown(KeyboardKey.Left)) dir.X -= 1;
-        if (Raylib.IsKeyDown(KeyboardKey.Right)) dir.X += 1;
-        if (Raylib.IsKeyDown(KeyboardKey.Up)) dir.Y -= 1;
-        if (Raylib.IsKeyDown(KeyboardKey.Down)) dir.Y += 1;
-        MovementDirection = dir;
+        Vector2 movement = ReadMovement();
 
-        IsConfirmPressed = Raylib.IsKeyPressed(KeyboardKey.Z) || Raylib.IsKeyPressed(KeyboardKey.Enter);
-        IsCancelPressed = Raylib.IsKeyPressed(KeyboardKey.X);
+        bool confirmPressed =
+            Raylib.IsKeyPressed(KeyboardKey.Z) ||
+            Raylib.IsKeyPressed(KeyboardKey.Enter);
 
-        MenuInput = IsConfirmPressed ? MenuInput.Confirm
-            : Raylib.IsKeyPressed(KeyboardKey.Left) ? MenuInput.Left
-            : Raylib.IsKeyPressed(KeyboardKey.Right) ? MenuInput.Right
-            : Raylib.IsKeyPressed(KeyboardKey.Up) ? MenuInput.Up
-            : Raylib.IsKeyPressed(KeyboardKey.Down) ? MenuInput.Down
-            : MenuInput.None;
+        bool cancelPressed =
+            Raylib.IsKeyPressed(KeyboardKey.X);
+
+        MenuInput menuAction = confirmPressed
+            ? MenuInput.Confirm
+            : Raylib.IsKeyPressed(KeyboardKey.Left)
+                ? MenuInput.Left
+                : Raylib.IsKeyPressed(KeyboardKey.Right)
+                    ? MenuInput.Right
+                    : Raylib.IsKeyPressed(KeyboardKey.Up)
+                        ? MenuInput.Up
+                        : Raylib.IsKeyPressed(KeyboardKey.Down)
+                            ? MenuInput.Down
+                            : MenuInput.None;
+
+        return new BattleInput(
+            Movement: movement,
+            MenuAction: menuAction,
+            ConfirmPressed: confirmPressed,
+            CancelPressed: cancelPressed);
+    }
+
+    private static Vector2 ReadMovement()
+    {
+        var movement = Vector2.Zero;
+
+        if (Raylib.IsKeyDown(KeyboardKey.Left))
+            movement.X -= 1f;
+
+        if (Raylib.IsKeyDown(KeyboardKey.Right))
+            movement.X += 1f;
+
+        if (Raylib.IsKeyDown(KeyboardKey.Up))
+            movement.Y -= 1f;
+
+        if (Raylib.IsKeyDown(KeyboardKey.Down))
+            movement.Y += 1f;
+
+        return movement;
     }
 }

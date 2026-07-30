@@ -1,63 +1,67 @@
 ﻿using Raylib_cs;
 using UndertaleBattle.Assets;
-using UndertaleBattle.Core.Context;
+using UndertaleBattle.Core;
 using UndertaleBattle.Core.Input;
-using UndertaleBattle.Core.Interfaces;
 using UndertaleBattle.Interfaces;
 
 namespace UndertaleBattle;
 
 public sealed class GameEngine
 {
-    private readonly BattleContext _context;
-    private readonly IBattleStateMachine _stateMachine;
+    private readonly BattleSimulation _simulation;
     private readonly IRaylibRenderer _renderer;
     private readonly AssetStore _assets;
-    private readonly IInputState _input;
-    
+    private readonly IBattleInputSource _input;
+
     public GameEngine(
-        BattleContext context,
-        IBattleStateMachine stateMachine,
+        BattleSimulation simulation,
         IRaylibRenderer renderer,
         AssetStore assets,
-        IInputState input)
+        IBattleInputSource input)
     {
-        _context = context;
-        _stateMachine = stateMachine;
-        _renderer = renderer;
-        _assets = assets;
-        _input = input;
+        _simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
+        _renderer = renderer ?? throw new ArgumentNullException(nameof(renderer));
+        _assets = assets ?? throw new ArgumentNullException(nameof(assets));
+        _input = input ?? throw new ArgumentNullException(nameof(input));
     }
 
     public void Run()
     {
-        Raylib.InitWindow(Settings.ScreenWidth, Settings.ScreenHeight, "Undertale Battle");
+        Raylib.InitWindow(
+            Settings.ScreenWidth,
+            Settings.ScreenHeight,
+            "Undertale Battle");
+
         Raylib.SetTargetFPS(60);
-        
+
         _assets.LoadAll();
 
-        while (!Raylib.WindowShouldClose())
+        try
         {
-            ApplyInput();
-            
-            // Clamp to guard against spiral-of-death on frame hitches (e.g. asset load stalls)
-            float deltaTime = Math.Min(Raylib.GetFrameTime(), 1f / 30f);
-            _stateMachine.Update(_context, deltaTime);
+            while (!Raylib.WindowShouldClose())
+            {
+                var input = _input.Poll();
 
-            Raylib.BeginDrawing();
-            Raylib.ClearBackground(Color.Black);
-            _renderer.Draw(_context);
-            Raylib.EndDrawing();
+                float deltaTime = Math.Min(
+                    Raylib.GetFrameTime(),
+                    1f / 30f);
+
+                _simulation.Update(input, deltaTime);
+
+                Raylib.BeginDrawing();
+                Raylib.ClearBackground(Color.Black);
+
+                _renderer.Draw(
+                    _simulation.Session,
+                    _simulation.CurrentState);
+
+                Raylib.EndDrawing();
+            }
         }
-
-        Raylib.CloseWindow();
-    }
-
-    private void ApplyInput()
-    {
-        _input.Poll();
-
-        _context.MovementInput = _input.MovementDirection;
-        _context.PendingMenuInput = _input.MenuInput;
+        finally
+        {
+            _assets.Dispose();
+            Raylib.CloseWindow();
+        }
     }
 }

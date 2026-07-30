@@ -1,60 +1,53 @@
-﻿using UndertaleBattle.Core.Context;
-using UndertaleBattle.Core.Enums;
+﻿using UndertaleBattle.Core.Enums;
+using UndertaleBattle.Core.Input;
 using UndertaleBattle.Core.Interfaces;
+using UndertaleBattle.Core.Runtime;
 
 namespace UndertaleBattle.Core.States;
 
-/// <summary>
-/// Reveals the current dialogue text over time, then transitions to the
-/// configured next state once the player confirms it.
-/// </summary>
 public sealed class TextDialogueState : IBattleState
 {
-    public BattleStateIdentity Identity => BattleStateIdentity.TextDialogue;
-
     private const float CharactersPerSecond = 30f;
 
     private float _elapsed;
 
-    public void Enter(BattleContext context)
+    public BattleStateIdentity Identity => BattleStateIdentity.TextDialogue;
+
+    public BattleStateIdentity? Enter(BattleSession session)
     {
         _elapsed = 0f;
-        
-        // ShowDialogue calls Begin before transitioning here. This protects
-        // against accidentally entering dialogue without configured text.
-        context.Dialogue.RevealCharacters(0);
-        
-        context.ClearTransientInput();
+        session.Dialogue.RevealCharacters(0);
+
+        return null;
     }
 
-    public void Update(BattleContext context, float deltaTime)
+    public BattleStateIdentity? Update(
+        BattleSession session,
+        BattleInput input,
+        float deltaTime)
     {
-        var dialogue = context.Dialogue;
-
-        if (!dialogue.IsFullyVisible)
+        if (!session.Dialogue.IsFullyVisible)
         {
             _elapsed += deltaTime;
-            
-            int characterCount = (int)(_elapsed * CharactersPerSecond);
-            dialogue.RevealCharacters(characterCount);
-            
-            // Confirm during typing completes the line rather than being ignored.
-            if (context.PendingMenuInput == MenuInput.Confirm)
-            {
-                dialogue.RevealAll();
-                context.ClearTransientInput();
-            }
 
-            return;
+            int visibleCharacters =
+                (int)(_elapsed * CharactersPerSecond);
+
+            session.Dialogue.RevealCharacters(visibleCharacters);
+
+            if (input.ConfirmPressed)
+                session.Dialogue.RevealAll();
+
+            return null;
         }
 
-        if (context.PendingMenuInput != MenuInput.Confirm)
-            return;
-        
-        var nextState = dialogue.NextState;
-        
-        context.ClearTransientInput();
-        context.StateMachine.ChangeState(nextState, context);
+        return input.ConfirmPressed
+            ? session.Dialogue.ContinueWith
+            : null;
     }
-    public void Exit(BattleContext context) {}
+
+    public void Exit(BattleSession session)
+    {
+        session.Dialogue.Clear();
+    }
 }

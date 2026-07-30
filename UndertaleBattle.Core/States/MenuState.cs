@@ -1,6 +1,7 @@
-﻿using UndertaleBattle.Core.Context;
-using UndertaleBattle.Core.Enums;
+﻿using UndertaleBattle.Core.Enums;
+using UndertaleBattle.Core.Input;
 using UndertaleBattle.Core.Interfaces;
+using UndertaleBattle.Core.Runtime;
 
 namespace UndertaleBattle.Core.States;
 
@@ -9,8 +10,6 @@ namespace UndertaleBattle.Core.States;
 /// </summary>
 public sealed class MenuState : IBattleState
 {
-    public BattleStateIdentity Identity => BattleStateIdentity.Menu;
-
     public const int OptionCount = 4;
 
     private const int FightIndex = 0;
@@ -18,114 +17,115 @@ public sealed class MenuState : IBattleState
     private const int ItemIndex = 2;
     private const int MercyIndex = 3;
 
-    public void Enter(BattleContext context)
+    public BattleStateIdentity Identity => BattleStateIdentity.Menu;
+
+    public BattleStateIdentity? Enter(BattleSession session)
     {
-        context.Menu.Reset();
-        context.ClearTransientInput();
+        session.Ui.CommandMenu.Reset();
+        return null;
     }
 
-    public void Update(BattleContext context, float deltaTime)
+    public BattleStateIdentity? Update(
+        BattleSession session,
+        BattleInput input,
+        float deltaTime)
     {
-        switch (context.PendingMenuInput)
+        return input.MenuAction switch
         {
-            case MenuInput.Left:
-                context.Menu.MoveLeft(OptionCount);
-                break;
-
-            case MenuInput.Right:
-                context.Menu.MoveRight(OptionCount);
-                break;
-
-            case MenuInput.Confirm:
-                HandleConfirm(context);
-                break;
-        }
-
-        context.ClearTransientInput();
+            MenuInput.Left => MoveLeft(session),
+            MenuInput.Right => MoveRight(session),
+            MenuInput.Confirm => ResolveSelection(session),
+            _ => null
+        };
     }
 
-    public void Exit(BattleContext context)
+    public void Exit(BattleSession session)
     {
     }
 
-    private static void HandleConfirm(BattleContext context)
+    private static BattleStateIdentity? MoveLeft(BattleSession session)
     {
-        switch (context.Menu.SelectedIndex)
+        session.Ui.CommandMenu.MoveLeft(OptionCount);
+        return null;
+    }
+
+    private static BattleStateIdentity? MoveRight(BattleSession session)
+    {
+        session.Ui.CommandMenu.MoveRight(OptionCount);
+        return null;
+    }
+
+    private static BattleStateIdentity ResolveSelection(BattleSession session)
+    {
+        return session.Ui.CommandMenu.SelectedIndex switch
         {
-            case FightIndex:
-                ResolveFight(context);
-                break;
-
-            case ActIndex:
-                ResolveAct(context);
-                break;
-
-            case ItemIndex:
-                ResolveItem(context);
-                break;
-
-            case MercyIndex:
-                ResolveMercy(context);
-                break;
-
-            default:
-                throw new InvalidOperationException(
-                    $"Unknown menu index '{context.Menu.SelectedIndex}'.");
-        }
+            FightIndex => ResolveFight(session),
+            ActIndex => ResolveAct(session),
+            ItemIndex => ResolveItem(session),
+            MercyIndex => ResolveMercy(session),
+            _ => throw new InvalidOperationException(
+                $"Unknown menu index '{session.Ui.CommandMenu.SelectedIndex}'.")
+        };
     }
 
-    private static void ResolveFight(BattleContext context)
+    private static BattleStateIdentity ResolveFight(BattleSession session)
     {
-        if (context.CurrentEnemy is null)
-        {
-            context.ShowDialogue(
-                "There is nothing to fight.",
-                BattleStateIdentity.Menu);
-            return;
-        }
+        if (session.Combat.CurrentEnemy is not null)
+            return BattleStateIdentity.AttackQte;
 
-        context.StateMachine.ChangeState(BattleStateIdentity.AttackQte, context);
+        session.BeginDialogue(
+            "There is nothing to fight.",
+            BattleStateIdentity.Menu);
+
+        return BattleStateIdentity.TextDialogue;
     }
 
-    private static void ResolveAct(BattleContext context)
+    private static BattleStateIdentity ResolveAct(BattleSession session)
     {
-        var enemy = context.CurrentEnemy;
+        var enemy = session.Combat.CurrentEnemy;
 
-        string dialogue = enemy is null
+        string text = enemy is null
             ? "There is nothing here to act on."
             : $"* Check\n{enemy.Name} - {enemy.CheckDescription}";
 
-        context.ShowDialogue(dialogue, BattleStateIdentity.EnemyTurn);
+        session.BeginDialogue(text, BattleStateIdentity.EnemyTurn);
+
+        return BattleStateIdentity.TextDialogue;
     }
 
-    private static void ResolveItem(BattleContext context)
+    private static BattleStateIdentity ResolveItem(BattleSession session)
     {
-        if (context.Inventory.Count == 0)
+        if (session.Inventory.Count == 0)
         {
-            context.ShowDialogue(
+            session.BeginDialogue(
                 "You have no items!",
                 BattleStateIdentity.Menu);
-            return;
+
+            return BattleStateIdentity.TextDialogue;
         }
 
-        // Phase 1 retains the existing first-item behavior.
-        // A proper inventory-selection state belongs in a later phase.
-        var item = context.Inventory[0];
-        context.Inventory.RemoveAt(0);
+        // Inventory selection is intentionally deferred to a later menu phase.
+        var item = session.Inventory[0];
+        session.Inventory.RemoveAt(0);
 
-        context.PlayerSoul.Heal(item.HealAmount);
+        session.Player.Heal(item.HealAmount);
 
-        context.ShowDialogue(
+        session.BeginDialogue(
             item.BuildUseDialogue(),
             BattleStateIdentity.EnemyTurn);
+
+        return BattleStateIdentity.TextDialogue;
     }
 
-    private static void ResolveMercy(BattleContext context)
+    private static BattleStateIdentity ResolveMercy(BattleSession session)
     {
-        string enemyName = context.CurrentEnemy?.Name ?? "the enemy";
+        string enemyName =
+            session.Combat.CurrentEnemy?.Name ?? "the enemy";
 
-        context.ShowDialogue(
+        session.BeginDialogue(
             $"You spare {enemyName}... but it does not work yet.",
             BattleStateIdentity.EnemyTurn);
+
+        return BattleStateIdentity.TextDialogue;
     }
 }

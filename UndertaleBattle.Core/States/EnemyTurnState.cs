@@ -1,6 +1,7 @@
-﻿using UndertaleBattle.Core.Context;
-using UndertaleBattle.Core.Enums;
+﻿using UndertaleBattle.Core.Enums;
+using UndertaleBattle.Core.Input;
 using UndertaleBattle.Core.Interfaces;
+using UndertaleBattle.Core.Runtime;
 
 namespace UndertaleBattle.Core.States;
 
@@ -10,19 +11,32 @@ namespace UndertaleBattle.Core.States;
 /// </summary>
 public sealed class EnemyTurnState : IBattleState
 {
-    public BattleStateIdentity Identity => BattleStateIdentity.EnemyTurn;
-
     private readonly IAttackPattern _pattern;
 
-    public EnemyTurnState(IAttackPattern pattern) => _pattern = pattern;
+    public BattleStateIdentity Identity => BattleStateIdentity.EnemyTurn;
 
-    public void Enter(BattleContext context)
+    public EnemyTurnState(IAttackPattern pattern)
     {
-        _pattern.Enter(context);
-        context.CurrentAttackPattern = _pattern;
-        context.StateMachine.ChangeState(BattleStateIdentity.PlayerDodging, context);
+        _pattern = pattern ?? throw new ArgumentNullException(nameof(pattern));
     }
 
-    public void Update(BattleContext context, float deltaTime) { }
-    public void Exit(BattleContext context) { }
+    public BattleStateIdentity? Enter(BattleSession session)
+    {
+        session.Combat.BeginAttack(_pattern);
+        _pattern.Enter(session);
+
+        return BattleStateIdentity.PlayerDodging;
+    }
+
+    public BattleStateIdentity? Update(
+        BattleSession session,
+        BattleInput input,
+        float deltaTime)
+    {
+        return null;
+    }
+
+    public void Exit(BattleSession session)
+    {
+    }
 }

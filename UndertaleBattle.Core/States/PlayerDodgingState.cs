@@ -1,83 +1,93 @@
-﻿using System.Numerics;
-using UndertaleBattle.Core.Context;
-using UndertaleBattle.Core.Enums;
+﻿using UndertaleBattle.Core.Enums;
+using UndertaleBattle.Core.Input;
 using UndertaleBattle.Core.Interfaces;
+using UndertaleBattle.Core.Runtime;
+using UndertaleBattle.Core.Systems;
 
 namespace UndertaleBattle.Core.States;
 
 /// <summary>
-/// Player moves the soul, bullets tick, collision is checked.
-/// Input direction is injected via <see cref="BattleContext.MovementInput"/>.
+/// Coordinates the dodge phase. Reusable systems own movement, projectile,
+/// collision, and cleanup behavior.
 /// </summary>
 public sealed class PlayerDodgingState : IBattleState
 {
-    public BattleStateIdentity Identity => BattleStateIdentity.PlayerDodging;
-
     private readonly float _phaseDuration;
+    private readonly ISoulSystem _soulSystem;
+    private readonly IProjectileSystem _projectileSystem;
+    private readonly ICollisionSystem _collisionSystem;
+
     private float _elapsed;
 
-    public PlayerDodgingState(float phaseDuration = 6f)
+    public BattleStateIdentity Identity => BattleStateIdentity.PlayerDodging;
+
+    public PlayerDodgingState(
+        ISoulSystem soulSystem,
+        IProjectileSystem projectileSystem,
+        ICollisionSystem collisionSystem,
+        float phaseDuration = 6f)
     {
+        if (phaseDuration <= 0f)
+            throw new ArgumentOutOfRangeException(nameof(phaseDuration));
+
+        _soulSystem = soulSystem ?? throw new ArgumentNullException(nameof(soulSystem));
+        _projectileSystem = projectileSystem ?? throw new ArgumentNullException(nameof(projectileSystem));
+        _collisionSystem = collisionSystem ?? throw new ArgumentNullException(nameof(collisionSystem));
         _phaseDuration = phaseDuration;
     }
 
-    public void Enter(BattleContext context)
+    public BattleStateIdentity? Enter(BattleSession session)
     {
         _elapsed = 0f;
-        context.Bullets.Clear();
+
+        // Do not clear projectiles here.
+        // EnemyTurnState has just initialized the active attack and may already
+        // have spawned projectiles.
+        return null;
     }
 
-    public void Update(BattleContext context, float deltaTime)
+    public BattleStateIdentity? Update(
+        BattleSession session,
+        BattleInput input,
+        float deltaTime)
     {
         _elapsed += deltaTime;
 
-        context.CurrentAttackPattern?.Update(context, deltaTime);
-        MovePlayer(context, deltaTime);
-        TickBullets(context, deltaTime);
-        CheckCollisions(context);
+        _soulSystem.Update(
+            session.Player,
+            session.Arena,
+            input,
+            deltaTime);
 
-        bool patternDone = context.CurrentAttackPattern?.IsFinished ?? true;
-        if ((_elapsed >= _phaseDuration && patternDone) || context.PlayerSoul.IsDead)
-            context.StateMachine.ChangeState(BattleStateIdentity.Menu, context);
+        session.Combat.ActiveAttackPattern?.Update(session, deltaTime);
+
+        _projectileSystem.Update(
+            session.Combat,
+            session.Arena,
+            deltaTime);
+
+        _collisionSystem.ResolvePlayerProjectileCollisions(
+            session.Player,
+            session.Combat);
+
+        _projectileSystem.RemoveExpired(
+            session.Combat,
+            session.Arena);
+
+        bool attackFinished =
+            session.Combat.ActiveAttackPattern?.IsFinished ?? true;
+
+        if (session.Player.IsDead)
+            return BattleStateIdentity.Menu;
+
+        if (_elapsed >= _phaseDuration && attackFinished)
+            return BattleStateIdentity.Menu;
+
+        return null;
     }
 
-    public void Exit(BattleContext context)
+    public void Exit(BattleSession session)
     {
-        context.Bullets.Clear();
+        session.Combat.EndAttack();
     }
-
-    private static void MovePlayer(BattleContext context, float deltaTime)
-    {
-        context.PlayerSoul.Move(context.MovementInput, deltaTime);
-        context.PlayerSoul.ClampTo(context.Arena); // extension added to HeartSoul
-        context.PlayerSoul.TickInvulnerability(deltaTime);
-    }
-
-    private static void TickBullets(BattleContext context, float deltaTime)
-    {
-        foreach (var bullet in context.Bullets)
-            bullet.Update(deltaTime);
-
-        context.Bullets.RemoveAll(b => !b.IsAlive || IsOutOfArena(b, context));
-    }
-
-    private static void CheckCollisions(BattleContext context)
-    {
-        var soul = context.PlayerSoul;
-        foreach (var bullet in context.Bullets)
-        {
-            float dist = Vector2.Distance(soul.Position, bullet.Position);
-            if (dist < bullet.Radius + soul.Radius)
-            {
-                soul.TakeDamage(bullet.Damage, invulnerabilitySeconds: 1.5f);
-                bullet.IsAlive = false;
-            }
-        }
-    }
-
-    private static bool IsOutOfArena(Models.Bullet b, BattleContext ctx) =>
-        b.Position.X < ctx.Arena.Left  - 20 ||
-        b.Position.X > ctx.Arena.Right + 20 ||
-        b.Position.Y < ctx.Arena.Top   - 20 ||
-        b.Position.Y > ctx.Arena.Bottom + 20;
 }

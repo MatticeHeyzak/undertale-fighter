@@ -1,14 +1,16 @@
-﻿using UndertaleBattle.Core.Context;
+﻿using UndertaleBattle.Core.Runtime;
 
 namespace UndertaleBattle.Core.Interfaces;
 
 /// <summary>
-/// Implement this to create a new enemy attack pattern.
-/// Patterns only populate <see cref="BattleContext.Bullets"/> — no rendering.
+/// Controls projectile spawning for one active enemy attack.
+/// Patterns remain presentation-free.
 /// </summary>
 public interface IAttackPattern
 {
-    void Enter(BattleContext context);
-    void Update(BattleContext context, float deltaTime);
     bool IsFinished { get; }
+
+    void Enter(BattleSession session);
+
+    void Update(BattleSession session, float deltaTime);
 }

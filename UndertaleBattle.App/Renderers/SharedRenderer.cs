@@ -1,8 +1,7 @@
-﻿using Raylib_cs;
-using System.Numerics;
-using UndertaleBattle.Assets;
-using UndertaleBattle.Core.Assets;
-using UndertaleBattle.Core.Context;
+﻿using System.Numerics;
+using Raylib_cs;
+using UndertaleBattle.Core.Enums;
+using UndertaleBattle.Core.Runtime;
 using UndertaleBattle.Interfaces;
 using UndertaleBattle.Rendering;
 
@@ -17,32 +16,46 @@ public sealed class SharedRenderer : IRaylibRenderer
         _sprites = sprites;
     }
 
-    public void Draw(BattleContext context)
+    public void Draw(
+        BattleSession session,
+        BattleStateIdentity currentState)
     {
-        DrawArena(context);
-        DrawMenuButtons();
+        DrawArena(session);
+
+        if (currentState == BattleStateIdentity.Menu)
+            DrawMenuButtons();
     }
 
-    private static void DrawArena(BattleContext context)
+    private static void DrawArena(BattleSession session)
     {
-        var a = context.Arena;
-        var rect = new Rectangle(a.Left, a.Top, a.Width, a.Height);
-        Raylib.DrawRectangleLinesEx(rect, 4f, Color.White);
+        var arena = session.Arena.Shape;
+
+        var rectangle = new Rectangle(
+            arena.Left,
+            arena.Top,
+            arena.Width,
+            arena.Height);
+
+        Raylib.DrawRectangleLinesEx(rectangle, 4f, Color.White);
     }
 
     private void DrawMenuButtons()
     {
-        for (int i = 0; i < MenuButtonLayout.ButtonCount; i++)
+        for (int index = 0; index < MenuButtonLayout.ButtonCount; index++)
         {
-            var sprite = _sprites.Get(MenuButtonLayout.Keys[i]);
+            var sprite = _sprites.Get(MenuButtonLayout.Keys[index]);
             if (sprite is null)
                 continue;
 
-            var pos = MenuButtonLayout.PositionFor(i);
+            var position = MenuButtonLayout.PositionFor(index);
+
             Raylib.DrawTexturePro(
-                sprite.Texture, sprite.SourceRect,
-                sprite.DestRect(pos),
-                Vector2.Zero, 0f, Color.White);
+                sprite.Texture,
+                sprite.SourceRect,
+                sprite.DestRect(position),
+                Vector2.Zero,
+                0f,
+                Color.White);
         }
     }
 }

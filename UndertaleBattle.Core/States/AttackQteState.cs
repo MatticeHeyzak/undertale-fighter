@@ -1,16 +1,12 @@
-﻿using UndertaleBattle.Core.Context;
-using UndertaleBattle.Core.Enums;
+﻿using UndertaleBattle.Core.Enums;
+using UndertaleBattle.Core.Input;
 using UndertaleBattle.Core.Interfaces;
+using UndertaleBattle.Core.Runtime;
 
 namespace UndertaleBattle.Core.States;
 
-/// <summary>
-/// Runs the player's attack timing minigame and applies damage to the active enemy.
-/// </summary>
 public sealed class AttackQteState : IBattleState
 {
-    public BattleStateIdentity Identity => BattleStateIdentity.AttackQte;
-
     private const float FlashDuration = 2f;
 
     private readonly float _meterSpeed;
@@ -19,6 +15,8 @@ public sealed class AttackQteState : IBattleState
     private readonly float _perfectZoneHalfWidth;
 
     private bool _resolved;
+
+    public BattleStateIdentity Identity => BattleStateIdentity.AttackQte;
 
     public AttackQteState(
         float meterSpeed = 1f,
@@ -44,56 +42,63 @@ public sealed class AttackQteState : IBattleState
         _perfectZoneHalfWidth = perfectZoneHalfWidth;
     }
 
-    public void Enter(BattleContext context)
+    public BattleStateIdentity? Enter(BattleSession session)
     {
-        context.AttackQte.Reset();
-        context.ClearTransientInput();
+        session.Ui.AttackQte.Reset();
         _resolved = false;
+
+        return null;
     }
 
-    public void Update(BattleContext context, float deltaTime)
+    public BattleStateIdentity? Update(
+        BattleSession session,
+        BattleInput input,
+        float deltaTime)
     {
         if (_resolved)
         {
-            context.AttackQte.TickFlash(deltaTime);
+            session.Ui.AttackQte.TickFlash(deltaTime);
 
-            if (!context.AttackQte.IsResolving)
-                AdvanceToEnemyTurn(context);
+            if (!session.Ui.AttackQte.IsFlashing)
+            {
+                return session.Combat.IsBattleOver
+                    ? BattleStateIdentity.Menu
+                    : BattleStateIdentity.EnemyTurn;
+            }
 
-            return;
+            return null;
         }
 
-        context.AttackQte.AdvanceMeter(_meterSpeed * deltaTime);
+        session.Ui.AttackQte.AdvanceMeter(_meterSpeed * deltaTime);
 
-        if (context.PendingMenuInput == MenuInput.Confirm)
+        if (input.ConfirmPressed)
         {
-            context.ClearTransientInput();
-            ResolveHit(context);
-            return;
+            ResolveHit(session);
+            return null;
         }
 
-        if (context.AttackQte.MeterPosition >= 1f)
-            AdvanceToEnemyTurn(context);
+        return session.Ui.AttackQte.MeterPosition >= 1f
+            ? BattleStateIdentity.EnemyTurn
+            : null;
     }
 
-    public void Exit(BattleContext context)
+    public void Exit(BattleSession session)
     {
+        session.Ui.AttackQte.Reset();
     }
 
-    private void ResolveHit(BattleContext context)
+    private void ResolveHit(BattleSession session)
     {
-        var enemy = context.CurrentEnemy;
+        var enemy = session.Combat.CurrentEnemy;
 
-        // An enemy could have been removed by another battle effect while
-        // this state was active. Do not attempt to damage a null/dead target.
         if (enemy is null || enemy.IsDead)
         {
-            AdvanceToEnemyTurn(context);
+            _resolved = true;
             return;
         }
 
         float distanceFromCenter =
-            MathF.Abs(context.AttackQte.MeterPosition - 0.5f);
+            MathF.Abs(session.Ui.AttackQte.MeterPosition - 0.5f);
 
         float accuracy = Math.Clamp(
             1f - distanceFromCenter / 0.5f,
@@ -106,22 +111,11 @@ public sealed class AttackQteState : IBattleState
               (int)((_maximumDamage - _minimumDamage) * accuracy);
 
         enemy.TakeDamage(damage);
-        
+
         if (enemy.IsDead)
-            context.BattleOver = true;
+            session.Combat.MarkBattleOver();
 
-        context.AttackQte.StartFlash(FlashDuration);
+        session.Ui.AttackQte.StartFlash(FlashDuration);
         _resolved = true;
-    }
-
-    private static void AdvanceToEnemyTurn(BattleContext context)
-    {
-        context.AttackQte.Reset();
-
-        BattleStateIdentity nextState = context.BattleOver
-            ? BattleStateIdentity.Menu
-            : BattleStateIdentity.EnemyTurn;
-
-        context.StateMachine.ChangeState(nextState, context);
     }
 }
