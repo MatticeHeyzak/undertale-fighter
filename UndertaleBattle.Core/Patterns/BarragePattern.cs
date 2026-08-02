@@ -54,7 +54,7 @@ public sealed class BarragePattern : IAttackPattern
 
         for (int index = 1; index <= _bulletCount; index++)
         {
-            session.Combat.Projectiles.Add(new Bullet
+            session.Combat.SpawnProjectile(new Bullet
             {
                 Position = new Vector2(
                     arena.Left - 10f,

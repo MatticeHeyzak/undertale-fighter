@@ -70,7 +70,7 @@ public class WavePattern : IAttackPattern
     {
         var arena = session.Arena.Shape;
 
-        session.Combat.Projectiles.Add(new Bullet
+        session.Combat.SpawnProjectile(new Bullet
         {
             Position = new Vector2(arena.Center.X, arena.Top - 10f),
             Velocity = new Vector2(0f, _speed),

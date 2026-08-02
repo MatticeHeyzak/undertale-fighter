@@ -78,7 +78,10 @@ public sealed class PlayerDodgingState : IBattleState
             session.Combat.ActiveAttackPattern?.IsFinished ?? true;
 
         if (session.Player.IsDead)
+        {
+            session.Complete(BattleOutcome.PlayerDefeated);
             return BattleStateIdentity.Menu;
+        }
 
         if (_elapsed >= _phaseDuration && attackFinished)
             return BattleStateIdentity.Menu;

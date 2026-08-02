@@ -61,7 +61,7 @@ public sealed class AttackQteState : IBattleState
 
             if (!session.Ui.AttackQte.IsFlashing)
             {
-                return session.Combat.IsBattleOver
+                return session.IsComplete
                     ? BattleStateIdentity.Menu
                     : BattleStateIdentity.EnemyTurn;
             }
@@ -113,7 +113,7 @@ public sealed class AttackQteState : IBattleState
         enemy.TakeDamage(damage);
 
         if (enemy.IsDead)
-            session.Combat.MarkBattleOver();
+            session.Complete(BattleOutcome.EnemyDefeated);
 
         session.Ui.AttackQte.StartFlash(FlashDuration);
         _resolved = true;

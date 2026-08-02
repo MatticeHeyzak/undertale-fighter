@@ -4,40 +4,48 @@ using UndertaleBattle.Core.Models;
 namespace UndertaleBattle.Core.Runtime;
 
 /// <summary>
-/// Runtime combat data: active target, active enemy attack, and projectiles.
+/// Mutable combat runtime for one battle. Projectile ownership remains here;
+/// callers cannot modify the collection directly.
 /// </summary>
 public sealed class CombatState
 {
-    public Enemy? CurrentEnemy { get; set; }
-    
+    private readonly List<Bullet> _projectiles = new();
+
+    public Enemy CurrentEnemy { get; }
+
     public IAttackPattern? ActiveAttackPattern { get; private set; }
 
-    public List<Bullet> Projectiles { get; } = new();
-    
-    public bool IsBattleOver { get; private set; }
+    public IReadOnlyList<Bullet> Projectiles => _projectiles;
+
+    public CombatState(Enemy currentEnemy)
+    {
+        CurrentEnemy = currentEnemy ??
+                       throw new ArgumentNullException(nameof(currentEnemy));
+    }
 
     public void BeginAttack(IAttackPattern attackPattern)
     {
         ArgumentNullException.ThrowIfNull(attackPattern);
-        
-        Projectiles.Clear();
+
+        _projectiles.Clear();
         ActiveAttackPattern = attackPattern;
     }
 
     public void EndAttack()
     {
         ActiveAttackPattern = null;
-        Projectiles.Clear();
+        _projectiles.Clear();
     }
 
-    public void MarkBattleOver()
+    public void SpawnProjectile(Bullet projectile)
     {
-        IsBattleOver = true;
-        EndAttack();
+        ArgumentNullException.ThrowIfNull(projectile);
+        _projectiles.Add(projectile);
     }
 
-    public void RemoveInactiveProjectiles()
+    internal void RemoveProjectiles(Predicate<Bullet> shouldRemove)
     {
-        Projectiles.RemoveAll(projectile => !projectile.IsAlive);
+        ArgumentNullException.ThrowIfNull(shouldRemove);
+        _projectiles.RemoveAll(shouldRemove);
     }
 }

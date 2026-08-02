@@ -7,7 +7,7 @@ using UndertaleBattle.Core.Systems;
 namespace UndertaleBattle.Core;
 
 /// <summary>
-/// Coordinates the simulation update order for one battle.
+/// Coordinates one deterministic simulation step for one battle.
 /// Rendering and platform input remain outside Core.
 /// </summary>
 public sealed class BattleSimulation
@@ -34,6 +34,12 @@ public sealed class BattleSimulation
 
     public void Start(BattleStateIdentity initialState)
     {
+        if (_stateMachine.CurrentState is not null)
+        {
+            throw new InvalidOperationException(
+                "A battle simulation can only be started once.");
+        }
+
         _stateMachine.ChangeState(initialState, Session);
     }
 
@@ -41,6 +47,9 @@ public sealed class BattleSimulation
     {
         if (deltaTime < 0f)
             throw new ArgumentOutOfRangeException(nameof(deltaTime));
+
+        if (Session.IsComplete)
+            return;
 
         _arenaSystem.Update(Session.Arena, deltaTime);
         _stateMachine.Update(Session, input, deltaTime);

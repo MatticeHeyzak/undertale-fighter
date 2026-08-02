@@ -32,7 +32,7 @@ public sealed class ProjectileSystem : IProjectileSystem
         ArgumentNullException.ThrowIfNull(combat);
         ArgumentNullException.ThrowIfNull(arena);
 
-        combat.Projectiles.RemoveAll(projectile =>
+        combat.RemoveProjectiles(projectile =>
             !projectile.IsAlive ||
             IsOutsideDespawnBounds(projectile, arena));
     }

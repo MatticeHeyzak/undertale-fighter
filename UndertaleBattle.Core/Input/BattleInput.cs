@@ -9,13 +9,19 @@ namespace UndertaleBattle.Core.Input;
 /// </summary>
 public readonly record struct BattleInput(
     Vector2 Movement,
-    MenuInput MenuAction,
+    bool LeftPressed,
+    bool RightPressed,
+    bool UpPressed,
+    bool DownPressed,
     bool ConfirmPressed,
     bool CancelPressed)
 {
     public static BattleInput None => new(
         Movement: Vector2.Zero,
-        MenuAction: MenuInput.None,
+        LeftPressed: false,
+        RightPressed: false,
+        UpPressed: false,
+        DownPressed: false,
         ConfirmPressed: false,
         CancelPressed: false);
 }

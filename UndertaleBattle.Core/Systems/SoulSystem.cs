@@ -7,7 +7,7 @@ namespace UndertaleBattle.Core.Systems;
 /// <summary>
 /// Updates standard free-movement soul behaviour.
 /// </summary>
-public class SoulSystem : ISoulSystem
+public sealed class SoulSystem : ISoulSystem
 {
     public void Update(
         SoulState soul,
@@ -17,11 +17,13 @@ public class SoulSystem : ISoulSystem
     {
         ArgumentNullException.ThrowIfNull(soul);
         ArgumentNullException.ThrowIfNull(arena);
-        
+
         if (deltaTime < 0f)
             throw new ArgumentOutOfRangeException(nameof(deltaTime));
-        
-        
+
+        soul.TickInvulnerability(deltaTime);
+        Move(soul, input.Movement, deltaTime);
+        soul.ClampTo(arena.Shape);
     }
 
     private static void Move(
@@ -31,7 +33,7 @@ public class SoulSystem : ISoulSystem
     {
         if (direction == Vector2.Zero)
             return;
-        
+
         soul.Position += Vector2.Normalize(direction) * soul.Speed * deltaTime;
     }
 }

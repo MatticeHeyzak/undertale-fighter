@@ -1,6 +1,7 @@
 ﻿using UndertaleBattle.Core.Enums;
 using UndertaleBattle.Core.Input;
 using UndertaleBattle.Core.Interfaces;
+using UndertaleBattle.Core.Models;
 using UndertaleBattle.Core.Runtime;
 
 namespace UndertaleBattle.Core.States;
@@ -30,13 +31,19 @@ public sealed class MenuState : IBattleState
         BattleInput input,
         float deltaTime)
     {
-        return input.MenuAction switch
-        {
-            MenuInput.Left => MoveLeft(session),
-            MenuInput.Right => MoveRight(session),
-            MenuInput.Confirm => ResolveSelection(session),
-            _ => null
-        };
+        if (session.IsComplete)
+            return null;
+
+        if (input.ConfirmPressed)
+            return ResolveSelection(session);
+
+        if (input.LeftPressed)
+            return MoveLeft(session);
+
+        if (input.RightPressed)
+            return MoveRight(session);
+
+        return null;
     }
 
     public void Exit(BattleSession session)
@@ -59,7 +66,7 @@ public sealed class MenuState : IBattleState
     {
         return session.Ui.CommandMenu.SelectedIndex switch
         {
-            FightIndex => ResolveFight(session),
+            FightIndex => BattleStateIdentity.AttackQte,
             ActIndex => ResolveAct(session),
             ItemIndex => ResolveItem(session),
             MercyIndex => ResolveMercy(session),
@@ -68,34 +75,20 @@ public sealed class MenuState : IBattleState
         };
     }
 
-    private static BattleStateIdentity ResolveFight(BattleSession session)
-    {
-        if (session.Combat.CurrentEnemy is not null)
-            return BattleStateIdentity.AttackQte;
-
-        session.BeginDialogue(
-            "There is nothing to fight.",
-            BattleStateIdentity.Menu);
-
-        return BattleStateIdentity.TextDialogue;
-    }
-
     private static BattleStateIdentity ResolveAct(BattleSession session)
     {
         var enemy = session.Combat.CurrentEnemy;
 
-        string text = enemy is null
-            ? "There is nothing here to act on."
-            : $"* Check\n{enemy.Name} - {enemy.CheckDescription}";
-
-        session.BeginDialogue(text, BattleStateIdentity.EnemyTurn);
+        session.BeginDialogue(
+            $"* Check\n{enemy.Name} - {enemy.CheckDescription}",
+            BattleStateIdentity.EnemyTurn);
 
         return BattleStateIdentity.TextDialogue;
     }
 
     private static BattleStateIdentity ResolveItem(BattleSession session)
     {
-        if (session.Inventory.Count == 0)
+        if (!session.TryConsumeFirstItem(out Item? item))
         {
             session.BeginDialogue(
                 "You have no items!",
@@ -103,10 +96,6 @@ public sealed class MenuState : IBattleState
 
             return BattleStateIdentity.TextDialogue;
         }
-
-        // Inventory selection is intentionally deferred to a later menu phase.
-        var item = session.Inventory[0];
-        session.Inventory.RemoveAt(0);
 
         session.Player.Heal(item.HealAmount);
 
@@ -119,11 +108,8 @@ public sealed class MenuState : IBattleState
 
     private static BattleStateIdentity ResolveMercy(BattleSession session)
     {
-        string enemyName =
-            session.Combat.CurrentEnemy?.Name ?? "the enemy";
-
         session.BeginDialogue(
-            $"You spare {enemyName}... but it does not work yet.",
+            $"You spare {session.Combat.CurrentEnemy.Name}... but it does not work yet.",
             BattleStateIdentity.EnemyTurn);
 
         return BattleStateIdentity.TextDialogue;

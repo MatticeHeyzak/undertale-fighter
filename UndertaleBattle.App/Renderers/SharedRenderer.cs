@@ -24,6 +24,36 @@ public sealed class SharedRenderer : IRaylibRenderer
 
         if (currentState == BattleStateIdentity.Menu)
             DrawMenuButtons();
+
+        DrawOutcomeOverlay(session);
+    }
+    
+    private static void DrawOutcomeOverlay(BattleSession session)
+    {
+        if (session.Outcome == BattleOutcome.InProgress)
+            return;
+
+        string result = session.Outcome switch
+        {
+            BattleOutcome.EnemyDefeated => "YOU WON",
+            BattleOutcome.PlayerDefeated => "YOU DIED",
+            _ => throw new InvalidOperationException(
+                $"Unhandled outcome '{session.Outcome}'.")
+        };
+
+        Raylib.DrawText(
+            result,
+            Settings.ScreenWidth / 2 - 90,
+            Settings.ScreenHeight / 2 - 20,
+            36,
+            Color.White);
+
+        Raylib.DrawText(
+            "Z / ENTER: RETRY     X: EXIT",
+            Settings.ScreenWidth / 2 - 190,
+            Settings.ScreenHeight / 2 + 30,
+            20,
+            Color.White);
     }
 
     private static void DrawArena(BattleSession session)
