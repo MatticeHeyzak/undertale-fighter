@@ -91,7 +91,7 @@ public sealed class AttackQteState : IBattleState
     {
         var enemy = session.Combat.CurrentEnemy;
 
-        if (enemy is null || enemy.IsDead)
+        if (enemy.IsDead)
         {
             _resolved = true;
             return;

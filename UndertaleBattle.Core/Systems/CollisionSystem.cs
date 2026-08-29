@@ -21,11 +21,13 @@ public class CollisionSystem : ICollisionSystem
             if (!projectile.IsAlive)
                 continue;
 
-            float collistionDistance = player.Radius + projectile.Radius;
-            
-            float distanceSquared = Vector2.DistanceSquared(player.Position, projectile.Position);
+            float collisionDistance = player.Radius + projectile.Radius;
 
-            if (distanceSquared > collistionDistance * collistionDistance)
+            float distanceSquared = Vector2.DistanceSquared(
+                player.Position,
+                projectile.Position);
+
+            if (distanceSquared > collisionDistance * collisionDistance)
                 continue;
 
             bool damaged = player.TryTakeDamage(
