@@ -5,21 +5,28 @@ using UndertaleBattle.Core.Runtime;
 
 namespace UndertaleBattle.Core.Patterns;
 
-public class WavePattern : IAttackPattern
+/// <summary>
+/// Spawns vertical waves on a schedule and owns the duration of its dodge
+/// phase.
+/// </summary>
+public sealed class WavePattern : IAttackPattern
 {
     private readonly int _waveCount;
     private readonly float _interval;
     private readonly float _speed;
     private readonly int _damage;
+    private readonly float _duration;
 
     private int _spawnedWaves;
     private float _timeUntilNextSpawn;
+    private float _elapsed;
 
     public WavePattern(
         int waveCount = 6,
         float interval = 0.4f,
         float speed = 160f,
-        int damage = 5)
+        int damage = 5,
+        float duration = 6f)
     {
         if (waveCount <= 0)
             throw new ArgumentOutOfRangeException(nameof(waveCount));
@@ -33,13 +40,19 @@ public class WavePattern : IAttackPattern
         if (damage <= 0)
             throw new ArgumentOutOfRangeException(nameof(damage));
 
+        if (duration <= 0f)
+            throw new ArgumentOutOfRangeException(nameof(duration));
+
         _waveCount = waveCount;
         _interval = interval;
         _speed = speed;
         _damage = damage;
+        _duration = duration;
     }
 
-    public bool IsFinished => _spawnedWaves >= _waveCount;
+    public bool IsComplete =>
+        _spawnedWaves >= _waveCount &&
+        _elapsed >= _duration;
 
     public void Enter(BattleSession session)
     {
@@ -47,17 +60,26 @@ public class WavePattern : IAttackPattern
 
         _spawnedWaves = 0;
         _timeUntilNextSpawn = 0f;
+        _elapsed = 0f;
     }
 
     public void Update(BattleSession session, float deltaTime)
     {
-        if (IsFinished)
+        ArgumentNullException.ThrowIfNull(session);
+
+        if (deltaTime < 0f)
+            throw new ArgumentOutOfRangeException(nameof(deltaTime));
+
+        _elapsed += deltaTime;
+
+        if (_spawnedWaves >= _waveCount)
             return;
 
         _timeUntilNextSpawn -= deltaTime;
 
-        // A while loop prevents missed waves on a slow frame.
-        while (_timeUntilNextSpawn <= 0f && !IsFinished)
+        // Ensures waves are not missed if a future caller uses a larger step.
+        while (_timeUntilNextSpawn <= 0f &&
+               _spawnedWaves < _waveCount)
         {
             SpawnWave(session);
 

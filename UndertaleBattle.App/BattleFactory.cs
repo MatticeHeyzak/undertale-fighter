@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using UndertaleBattle.Core;
+using UndertaleBattle.Core.Interfaces;
 using UndertaleBattle.Core.Models;
 using UndertaleBattle.Core.Patterns;
 using UndertaleBattle.Core.Runtime;
@@ -56,12 +57,18 @@ public sealed class BattleFactory : IBattleFactory
         var machine = new BattleStateMachine();
         machine.RegisterState(new MenuState());
         machine.RegisterState(new TextDialogueState());
-        machine.RegisterState(new EnemyTurnState(new BarragePattern()));
+        IAttackSelector attackSelector = new FixedAttackSelector(
+            () => new BarragePattern(
+                bulletCount: 5,
+                speed: 180f,
+                damage: 4,
+                duration: 6f));
+
+        machine.RegisterState(new EnemyTurnState(attackSelector));
         machine.RegisterState(new PlayerDodgingState(
             soulSystem,
             projectileSystem,
-            collisionSystem,
-            phaseDuration: 6f));
+            collisionSystem));
         machine.RegisterState(new AttackQteState());
 
         return new BattleSimulation(

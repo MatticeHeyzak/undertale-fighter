@@ -11,19 +11,24 @@ namespace UndertaleBattle.Core.States;
 /// </summary>
 public sealed class EnemyTurnState : IBattleState
 {
-    private readonly IAttackPattern _pattern;
+    private readonly IAttackSelector _attackSelector;
 
     public BattleStateIdentity Identity => BattleStateIdentity.EnemyTurn;
 
-    public EnemyTurnState(IAttackPattern pattern)
+    public EnemyTurnState(IAttackSelector attackSelector)
     {
-        _pattern = pattern ?? throw new ArgumentNullException(nameof(pattern));
+        _attackSelector = attackSelector ??
+                          throw new ArgumentNullException(nameof(attackSelector));
     }
 
     public BattleStateIdentity? Enter(BattleSession session)
     {
-        session.Combat.BeginAttack(_pattern);
-        _pattern.Enter(session);
+        ArgumentNullException.ThrowIfNull(session);
+
+        IAttackPattern attack = _attackSelector.CreateNextAttack(session);
+
+        session.Combat.BeginAttack(attack);
+        attack.Enter(session);
 
         return BattleStateIdentity.PlayerDodging;
     }

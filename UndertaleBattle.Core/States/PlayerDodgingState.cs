@@ -8,41 +8,42 @@ namespace UndertaleBattle.Core.States;
 
 /// <summary>
 /// Coordinates the dodge phase. Reusable systems own movement, projectile,
-/// collision, and cleanup behavior.
+/// collision, and cleanup behavior. The active attack owns its own completion
+/// policy and signals when this phase may end.
 /// </summary>
 public sealed class PlayerDodgingState : IBattleState
 {
-    private readonly float _phaseDuration;
     private readonly ISoulSystem _soulSystem;
     private readonly IProjectileSystem _projectileSystem;
     private readonly ICollisionSystem _collisionSystem;
-
-    private float _elapsed;
 
     public BattleStateIdentity Identity => BattleStateIdentity.PlayerDodging;
 
     public PlayerDodgingState(
         ISoulSystem soulSystem,
         IProjectileSystem projectileSystem,
-        ICollisionSystem collisionSystem,
-        float phaseDuration = 6f)
+        ICollisionSystem collisionSystem)
     {
-        if (phaseDuration <= 0f)
-            throw new ArgumentOutOfRangeException(nameof(phaseDuration));
-
-        _soulSystem = soulSystem ?? throw new ArgumentNullException(nameof(soulSystem));
-        _projectileSystem = projectileSystem ?? throw new ArgumentNullException(nameof(projectileSystem));
-        _collisionSystem = collisionSystem ?? throw new ArgumentNullException(nameof(collisionSystem));
-        _phaseDuration = phaseDuration;
+        _soulSystem = soulSystem ??
+                      throw new ArgumentNullException(nameof(soulSystem));
+        _projectileSystem = projectileSystem ??
+                            throw new ArgumentNullException(nameof(projectileSystem));
+        _collisionSystem = collisionSystem ??
+                           throw new ArgumentNullException(nameof(collisionSystem));
     }
-
+    
     public BattleStateIdentity? Enter(BattleSession session)
     {
-        _elapsed = 0f;
+        ArgumentNullException.ThrowIfNull(session);
 
-        // Do not clear projectiles here.
-        // EnemyTurnState has just initialized the active attack and may already
-        // have spawned projectiles.
+        if (session.Combat.ActiveAttackPattern is null)
+        {
+            throw new InvalidOperationException(
+                "Player dodging requires an active attack pattern.");
+        }
+
+        // Do not clear projectiles here. EnemyTurnState has already initialized
+        // the active attack, which may have spawned projectiles in Enter().
         return null;
     }
 
@@ -51,7 +52,14 @@ public sealed class PlayerDodgingState : IBattleState
         BattleInput input,
         float deltaTime)
     {
-        _elapsed += deltaTime;
+        ArgumentNullException.ThrowIfNull(session);
+
+        if (deltaTime < 0f)
+            throw new ArgumentOutOfRangeException(nameof(deltaTime));
+
+        IAttackPattern attack = session.Combat.ActiveAttackPattern
+                                ?? throw new InvalidOperationException(
+                                    "Player dodging was updated without an active attack pattern.");
 
         _soulSystem.Update(
             session.Player,
@@ -59,7 +67,7 @@ public sealed class PlayerDodgingState : IBattleState
             input,
             deltaTime);
 
-        session.Combat.ActiveAttackPattern?.Update(session, deltaTime);
+        attack.Update(session, deltaTime);
 
         _projectileSystem.Update(
             session.Combat,
@@ -74,23 +82,20 @@ public sealed class PlayerDodgingState : IBattleState
             session.Combat,
             session.Arena);
 
-        bool attackFinished =
-            session.Combat.ActiveAttackPattern?.IsFinished ?? true;
-
         if (session.Player.IsDead)
         {
             session.Complete(BattleOutcome.PlayerDefeated);
             return BattleStateIdentity.Menu;
         }
 
-        if (_elapsed >= _phaseDuration && attackFinished)
-            return BattleStateIdentity.Menu;
-
-        return null;
+        return attack.IsComplete
+            ? BattleStateIdentity.Menu
+            : null;
     }
 
     public void Exit(BattleSession session)
     {
+        ArgumentNullException.ThrowIfNull(session);
         session.Combat.EndAttack();
     }
 }
