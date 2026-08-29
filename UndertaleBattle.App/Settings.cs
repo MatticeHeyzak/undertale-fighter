@@ -2,6 +2,9 @@
 
 public static class Settings
 {
-    public const int ScreenWidth = 900;
-    public const int ScreenHeight = 600;
+    public const int VirtualWidth = 900;
+    public const int VirtualHeight = 600;
+
+    public const int InitialWindowWidth = VirtualWidth;
+    public const int InitialWindowHeight = VirtualHeight;
 }

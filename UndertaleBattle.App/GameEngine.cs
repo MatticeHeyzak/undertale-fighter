@@ -5,6 +5,7 @@ using UndertaleBattle.Core.Enums;
 using UndertaleBattle.Core.Input;
 using UndertaleBattle.Interfaces;
 using UndertaleBattle.Input;
+using UndertaleBattle.Rendering;
 
 namespace UndertaleBattle;
 
@@ -36,16 +37,23 @@ public sealed class GameEngine
 
     public void Run()
     {
-        Raylib.InitWindow(
-            Settings.ScreenWidth,
-            Settings.ScreenHeight,
-            "Undertale Battle");
+        Raylib.SetConfigFlags(ConfigFlags.ResizableWindow);
 
+        Raylib.InitWindow(
+            Settings.InitialWindowWidth,
+            Settings.InitialWindowHeight,
+            "Undertale Battle");
+        
         Raylib.SetTargetFPS(60);
         _assets.LoadAll();
 
+        VirtualViewport? viewport = null;
+
         try
         {
+            viewport = new VirtualViewport();
+            viewport.Initialize();
+            
             BattleSimulation simulation = CreateStartedBattle();
             var inputBuffer = new BattleInputBuffer();
             float accumulator = 0f;
@@ -92,16 +100,22 @@ public sealed class GameEngine
 
                 Raylib.BeginDrawing();
                 Raylib.ClearBackground(Color.Black);
-
+                
+                viewport.BeginScene();
+                
                 _renderer.Draw(
                     simulation.Session,
                     simulation.CurrentState);
-
+                
+                viewport.EndScene();
+                viewport.Present();
+                
                 Raylib.EndDrawing();
             }
         }
         finally
         {
+            viewport?.Dispose();
             _assets.Dispose();
             Raylib.CloseWindow();
         }

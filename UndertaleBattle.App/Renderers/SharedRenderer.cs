@@ -43,15 +43,15 @@ public sealed class SharedRenderer : IRaylibRenderer
 
         Raylib.DrawText(
             result,
-            Settings.ScreenWidth / 2 - 90,
-            Settings.ScreenHeight / 2 - 20,
+            Settings.VirtualWidth / 2 - 90,
+            Settings.VirtualHeight / 2 - 20,
             36,
             Color.White);
 
         Raylib.DrawText(
             "Z / ENTER: RETRY     X: EXIT",
-            Settings.ScreenWidth / 2 - 190,
-            Settings.ScreenHeight / 2 + 30,
+            Settings.VirtualWidth / 2 - 190,
+            Settings.VirtualHeight / 2 + 30,
             20,
             Color.White);
     }

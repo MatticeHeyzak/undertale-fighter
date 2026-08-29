@@ -24,7 +24,7 @@ public sealed class BattleFactory : IBattleFactory
     {
         var arenaShape = new BattleArena(
             position: new Vector2(30f, 280f),
-            width: Settings.ScreenWidth - 70f,
+            width: Settings.VirtualWidth - 70f,
             height: 200f);
 
         var player = new SoulState(

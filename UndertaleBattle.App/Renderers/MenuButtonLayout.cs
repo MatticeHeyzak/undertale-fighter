@@ -24,9 +24,9 @@ public static class MenuButtonLayout
         AssetKey.UI.ButtonItemActive,  AssetKey.UI.ButtonMercyActive,
     };
 
-    private const int StartY = Settings.ScreenHeight - 50;
+    private const int StartY = Settings.VirtualHeight - 50;
     private const int StartX = 110;
-    private const float SpaceBetween = Settings.ScreenWidth / 4f;
+    private const float SpaceBetween = Settings.VirtualWidth / 4f;
 
     public static Vector2 PositionFor(int index) => new(StartX + SpaceBetween * index, StartY);
 }
